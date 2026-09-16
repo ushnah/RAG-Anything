@@ -80,7 +80,7 @@ dev-dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["raganything*"]
+include = ["raganything*", "arabic_poc*"]
 
 [tool.setuptools]
 include-package-data = true

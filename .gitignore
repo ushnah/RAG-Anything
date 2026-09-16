@@ -11,6 +11,7 @@ __pycache__/
 .venv/
 env/
 venv/
+.venv311/
 
 *.env*
 .env_example
@@ -78,3 +79,5 @@ memory-bank/
 .claude/
 .cursor/
 CLAUDE.md
+
+models/

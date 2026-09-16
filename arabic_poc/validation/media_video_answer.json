@@ -1,0 +1,84 @@
+{
+  "answer": "يحتوي جهاز الإنترنت الموجود في صندوق كما يوضح الفيديو على الوصلة http://box.lan ، بالإضافة إلى أن هناك العديد من التسخين والإصدارات المختلفة به بسعاتها، وآخر إصدار بـ4 غيغابايت. يمكن تحميل المحتوى من الوصلات الأخرى الموجودة في الفيديو مثل (org.kiwix.wikipedia.en.medicine.apk, org.kiwix.wikipedia.es.medicine.apk, و org.kiwix.wikipedia.a.medicine.apk). يوفر هذا الجهاز موسوعة ويكيبيديا بدون اتصال بالإنترنت، ويمكن تحميلها في أي مكان. جميع المحتوى متاح للتنزيل والReuse والمشاركة والبناء عليه بحرية. [e604ca733d30f25a8e1a56e8-000003]",
+  "citations": [
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000003",
+      "quote": "9\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan\nتختلف\nتتوفر منه عدة تسخ وإصدارات\nبسعاتها،وآخرهاإصداربسعة\nغيغابايت\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan"
+    }
+  ],
+  "sources": [
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000003",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/internet_in_a_box_arabic.webm",
+      "document": "internet_in_a_box_arabic.webm",
+      "original_text": "9\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan\nتختلف\nتتوفر منه عدة تسخ وإصدارات\nبسعاتها،وآخرهاإصداربسعة\nغيغابايت\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan",
+      "normalized_text": "9 http://box.lan http://box.lan http://box.lan تختلف تتوفر منه عدة تسخ واصدارات بسعاتها،واخرهااصداربسعة غيغابايت http://box.lan http://box.lan http://box.lan http://box.lan",
+      "anchor": {
+        "kind": "frame",
+        "start": 30.0,
+        "char_start": 0,
+        "char_end": 172
+      },
+      "engine": "paddleocr:ar",
+      "confidence": null,
+      "metadata": {
+        "title": "Internet-in-a-Box_(Arabic).webm",
+        "author": "Ala’a Najjar",
+        "license": "CC BY 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Internet-in-a-Box_%28Arabic%29.webm",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Internet-in-a-Box_%28Arabic%29.webm",
+        "sha256": "7954830689cca4e8c8136f44ab5cd88594751c3adfc432158c369a754cdd962c",
+        "modified": false
+      }
+    },
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000002",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/internet_in_a_box_arabic.webm",
+      "document": "internet_in_a_box_arabic.webm",
+      "original_text": "http://box.lan\n1200\nboxlanuhone/\n:\nInternet in a Box\nMedical Encyclopedia in English\nA complete collection of all health care,\nanatomy, and medication related topics from\nWikipedia in an offline format.\nLke Wikipedia all content is open access,\nmeaning that it is free to download, reuse,\nshare, and build upon.\nClick here to download\norg.kiwix.wikipedia.en.medicine.apk\nEnciclopedia Médica Offline de\nWikipedia\nSe trata de una coleccion completa de todos\nlos temas de Wikipedia sobre los cuidados\nrelacionados con la salud, la anatomia y la\nmedicacion, en un formato que no necesita\nيحتوي على موسوعة ويكيبيديا\nconexion a Internet.\nClick here to download\norg.kiwix.wikipedia.es.medicine.apk\nأو أجزاءِ منها، بالإضافة إلى\nويكيييديا الطية\nأخرى\nفيديوهات وكتب\nمقالات عن الرعاية الصحية متوافرة بدون اتصال\nبالإنترنت في كل مكان ويشكل مجائي\nClick here to download\norg.kiwix.wikipedia.a.medicine.apk\nfafehas efehra تentt\naeaa\nga  pr a faanh\na     ya\nO",
+      "normalized_text": "http://box.lan 1200 boxlanuhone/ : Internet in a Box Medical Encyclopedia in English A complete collection of all health care, anatomy, and medication related topics from Wikipedia in an offline format. Lke Wikipedia all content is open access, meaning that it is free to download, reuse, share, and build upon. Click here to download org.kiwix.wikipedia.en.medicine.apk Enciclopedia Médica Offline de Wikipedia Se trata de una coleccion completa de todos los temas de Wikipedia sobre los cuidados relacionados con la salud, la anatomia y la medicacion, en un formato que no necesita يحتوي علي موسوعة ويكيبيديا conexion a Internet. Click here to download org.kiwix.wikipedia.es.medicine.apk او اجزاء منها، بالاضافة الي ويكيييديا الطية اخري فيديوهات وكتب مقالات عن الرعاية الصحية متوافرة بدون اتصال بالانترنت في كل مكان ويشكل مجائي Click here to download org.kiwix.wikipedia.a.medicine.apk fafehas efehra تentt aeaa ga pr a faanh a ya O",
+      "anchor": {
+        "kind": "frame",
+        "start": 15.0,
+        "char_start": 0,
+        "char_end": 941
+      },
+      "engine": "paddleocr:ar",
+      "confidence": null,
+      "metadata": {
+        "title": "Internet-in-a-Box_(Arabic).webm",
+        "author": "Ala’a Najjar",
+        "license": "CC BY 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Internet-in-a-Box_%28Arabic%29.webm",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Internet-in-a-Box_%28Arabic%29.webm",
+        "sha256": "7954830689cca4e8c8136f44ab5cd88594751c3adfc432158c369a754cdd962c",
+        "modified": false
+      }
+    },
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000000",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/internet_in_a_box_arabic.webm",
+      "document": "internet_in_a_box_arabic.webm",
+      "original_text": "ath",
+      "normalized_text": "ath",
+      "anchor": {
+        "kind": "speech",
+        "start": 0.0,
+        "end": 3.7,
+        "char_start": 0,
+        "char_end": 3
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Internet-in-a-Box_(Arabic).webm",
+        "author": "Ala’a Najjar",
+        "license": "CC BY 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Internet-in-a-Box_%28Arabic%29.webm",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Internet-in-a-Box_%28Arabic%29.webm",
+        "sha256": "7954830689cca4e8c8136f44ab5cd88594751c3adfc432158c369a754cdd962c",
+        "modified": false
+      }
+    }
+  ]
+}

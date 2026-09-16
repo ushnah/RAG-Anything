@@ -162,3 +162,12 @@ def test_parse_pdf_assigns_page_index(monkeypatch, tmp_path):
         {"type": "text", "text": "page0-text", "page_idx": 0},
         {"type": "text", "text": "page1-text", "page_idx": 1},
     ]
+
+
+def test_recognition_dictionaries_exclude_metadata():
+    parser = PaddleOCRParser()
+    result = {'res': {'rec_texts': ['نص عربي', 'نص عربي'],
+                      'input_path': '/tmp/frame.png',
+                      'settings': {'mode': 'general', 'unclip': 'min'}}}
+    assert parser._extract_text_lines(result) == ['نص عربي', 'نص عربي']
+    assert parser._extract_text_lines({'rec_texts': [], 'input_path': '/tmp/blank.png'}) == []

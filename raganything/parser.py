@@ -2723,12 +2723,14 @@ class PaddleOCRParser(Parser):
                         else:
                             visit(item)
 
-                # Avoid double-visiting keys we already handled above; this prevents
-                # accidental duplication without content-level deduplication.
-                for key, value in node.items():
-                    if key in {"rec_texts", "text", "texts"}:
-                        continue
-                    visit(value)
+                # Recognition dictionaries also contain paths and model settings.
+                # Those strings are metadata, not recognized source text.
+                if any(key in node for key in ("rec_texts", "text", "texts")):
+                    return
+                # Traverse known result envelopes, never arbitrary metadata values.
+                for key in ("res", "result", "results", "data"):
+                    if key in node:
+                        visit(node[key])
                 return
 
             if isinstance(node, (list, tuple)):

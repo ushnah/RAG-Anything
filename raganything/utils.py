@@ -345,6 +345,15 @@ async def insert_text_content(
         ids=ids,
     )
 
+    # LightRAG records pipeline failures instead of always raising them.
+    # Propagate failure before the caller advances the document status.
+    if ids is not None:
+        for document_id in ([ids] if isinstance(ids, str) else ids):
+            status = await lightrag.doc_status.get_by_id(document_id)
+            if status and status.get("status") == "failed":
+                raise RuntimeError(
+                    f"Text insertion failed for {document_id}: {status.get('error_msg', 'unknown error')}"
+                )
     logger.info("Text content insertion complete")
 
 

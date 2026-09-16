@@ -1,0 +1,20 @@
+{
+  "source_passages": 14,
+  "statuses": {
+    "e604ca733d30f25a8e1a56e8-000000": "processed",
+    "e604ca733d30f25a8e1a56e8-000001": "processed",
+    "e604ca733d30f25a8e1a56e8-000002": "processed",
+    "e604ca733d30f25a8e1a56e8-000003": "processed",
+    "c776294c688b356b10c0e3f5-000000": "processed",
+    "c776294c688b356b10c0e3f5-000001": "processed",
+    "c776294c688b356b10c0e3f5-000002": "processed",
+    "c776294c688b356b10c0e3f5-000003": "processed",
+    "c776294c688b356b10c0e3f5-000004": "processed",
+    "c776294c688b356b10c0e3f5-000005": "processed",
+    "c776294c688b356b10c0e3f5-000006": "processed",
+    "c776294c688b356b10c0e3f5-000007": "processed",
+    "c776294c688b356b10c0e3f5-000008": "processed",
+    "b348da09e381c4190f06624b-000000": "processed"
+  },
+  "graph_extraction_note": "Qwen reached its output cap on the large video frame; graph completeness is not established."
+}

@@ -1,0 +1,92 @@
+{
+  "answer": "الطائرات هي مركبات تحلق في الجو، و她们有能力在空中飞行，并且被用于工业。 [c776294c688b356b10c0e3f5-000000]",
+  "citations": [
+    {
+      "id": "c776294c688b356b10c0e3f5-000000",
+      "quote": "الطائرة هي مركبة جوية أثقل من الهواء"
+    }
+  ],
+  "sources": [
+    {
+      "id": "c776294c688b356b10c0e3f5-000000",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " الطائرة هي مركبة جوية أثقل من الهواء",
+      "normalized_text": "الطائرة هي مركبة جوية اثقل من الهواء",
+      "anchor": {
+        "kind": "speech",
+        "start": 0.0,
+        "end": 4.0,
+        "char_start": 0,
+        "char_end": 37
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000003",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " تستطيع الطائران في الهواء",
+      "normalized_text": "تستطيع الطائران في الهواء",
+      "anchor": {
+        "kind": "speech",
+        "start": 11.0,
+        "end": 13.0,
+        "char_start": 0,
+        "char_end": 26
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000007",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " يستخدم في الصناعة الطائرة",
+      "normalized_text": "يستخدم في الصناعة الطائرة",
+      "anchor": {
+        "kind": "speech",
+        "start": 24.0,
+        "end": 28.0,
+        "char_start": 0,
+        "char_end": 26
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    }
+  ]
+}

@@ -1,0 +1,404 @@
+{
+  "models": {
+    "asr": "openai-whisper small (generic Arabic decoding)",
+    "ocr": "PaddleOCR Arabic PP-OCRv5"
+  },
+  "scope": "Extraction smoke test; no human-aligned CER/WER benchmark",
+  "checks": {
+    "timestamps_in_bounds": true,
+    "ocr_metadata_excluded": true,
+    "greeting_exact": true,
+    "video_caption_found_at_15_seconds": true
+  },
+  "samples": [
+    {
+      "file": "data/media_samples/airplane_arabic_60_90s.wav",
+      "duration_seconds": 30.0,
+      "record_counts": {
+        "speech": 9
+      }
+    },
+    {
+      "file": "data/media_samples/arabic_greeting.ogg",
+      "duration_seconds": 1.335147,
+      "record_counts": {
+        "speech": 1
+      }
+    },
+    {
+      "file": "data/media_samples/internet_in_a_box_arabic.webm",
+      "duration_seconds": 40.754,
+      "record_counts": {
+        "speech": 1,
+        "frame": 3
+      }
+    }
+  ],
+  "records": [
+    {
+      "id": "c776294c688b356b10c0e3f5-000000",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " الطائرة هي مركبة جوية أثقل من الهواء",
+      "normalized_text": "الطائرة هي مركبة جوية اثقل من الهواء",
+      "anchor": {
+        "kind": "speech",
+        "start": 0.0,
+        "end": 4.0,
+        "char_start": 0,
+        "char_end": 37
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000001",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " تستخدم كوزلة نقل جوئي",
+      "normalized_text": "تستخدم كوزلة نقل جوئي",
+      "anchor": {
+        "kind": "speech",
+        "start": 4.0,
+        "end": 7.0,
+        "char_start": 0,
+        "char_end": 22
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000002",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " تحلق إما شراعيا أو بمحرك واحد أو أكثر",
+      "normalized_text": "تحلق اما شراعيا او بمحرك واحد او اكثر",
+      "anchor": {
+        "kind": "speech",
+        "start": 7.0,
+        "end": 11.0,
+        "char_start": 0,
+        "char_end": 38
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000003",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " تستطيع الطائران في الهواء",
+      "normalized_text": "تستطيع الطائران في الهواء",
+      "anchor": {
+        "kind": "speech",
+        "start": 11.0,
+        "end": 13.0,
+        "char_start": 0,
+        "char_end": 26
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000004",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " اعتمادا على قوة رفا المتولدة على أجنحتها",
+      "normalized_text": "اعتمادا علي قوة رفا المتولدة علي اجنحتها",
+      "anchor": {
+        "kind": "speech",
+        "start": 13.0,
+        "end": 17.0,
+        "char_start": 0,
+        "char_end": 41
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000005",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " أو عن طريق قوة سحب الهواء",
+      "normalized_text": "او عن طريق قوة سحب الهواء",
+      "anchor": {
+        "kind": "speech",
+        "start": 17.0,
+        "end": 20.0,
+        "char_start": 0,
+        "char_end": 26
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000006",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " الأسس العلمية لصناعة الطائرات",
+      "normalized_text": "الاسس العلمية لصناعة الطائرات",
+      "anchor": {
+        "kind": "speech",
+        "start": 20.0,
+        "end": 24.0,
+        "char_start": 0,
+        "char_end": 30
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000007",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " يستخدم في الصناعة الطائرة",
+      "normalized_text": "يستخدم في الصناعة الطائرة",
+      "anchor": {
+        "kind": "speech",
+        "start": 24.0,
+        "end": 28.0,
+        "char_start": 0,
+        "char_end": 26
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "c776294c688b356b10c0e3f5-000008",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/airplane_arabic_60_90s.wav",
+      "document": "airplane_arabic_60_90s.wav",
+      "original_text": " يستخدم في الصناعة",
+      "normalized_text": "يستخدم في الصناعة",
+      "anchor": {
+        "kind": "speech",
+        "start": 28.0,
+        "end": 30.0,
+        "char_start": 0,
+        "char_end": 18
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Airplane_article_in_Arabic_Wikipedia.ogg",
+        "author": "Riadismet",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Airplane_article_in_Arabic_Wikipedia.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Airplane_article_in_Arabic_Wikipedia.ogg",
+        "sha256": "04981d3799ac31a4552af6b21007851791bca524167e3536ee404cee0213bb68",
+        "modified": true,
+        "transformation": "Seconds 60–90, mono 16 kHz WAV",
+        "original_start_seconds": 60
+      }
+    },
+    {
+      "id": "b348da09e381c4190f06624b-000000",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/arabic_greeting.ogg",
+      "document": "arabic_greeting.ogg",
+      "original_text": " السلام عليكم",
+      "normalized_text": "السلام عليكم",
+      "anchor": {
+        "kind": "speech",
+        "start": 0.0,
+        "end": 1.335147,
+        "char_start": 0,
+        "char_end": 13
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "السلام_عليكم.ogg",
+        "author": "TwoThirty",
+        "license": "Public domain",
+        "source_url": "https://commons.wikimedia.org/wiki/File:%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85_%D8%B9%D9%84%D9%8A%D9%83%D9%85.ogg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85_%D8%B9%D9%84%D9%8A%D9%83%D9%85.ogg",
+        "sha256": "e52cee683a6fa1ab0770e2893b74bb074e94d54b690493598115af8dd8222b46",
+        "modified": false
+      }
+    },
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000000",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/internet_in_a_box_arabic.webm",
+      "document": "internet_in_a_box_arabic.webm",
+      "original_text": "ath",
+      "normalized_text": "ath",
+      "anchor": {
+        "kind": "speech",
+        "start": 0.0,
+        "end": 3.7,
+        "char_start": 0,
+        "char_end": 3
+      },
+      "engine": "whisper:small",
+      "confidence": null,
+      "metadata": {
+        "title": "Internet-in-a-Box_(Arabic).webm",
+        "author": "Ala’a Najjar",
+        "license": "CC BY 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Internet-in-a-Box_%28Arabic%29.webm",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Internet-in-a-Box_%28Arabic%29.webm",
+        "sha256": "7954830689cca4e8c8136f44ab5cd88594751c3adfc432158c369a754cdd962c",
+        "modified": false
+      }
+    },
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000001",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/internet_in_a_box_arabic.webm",
+      "document": "internet_in_a_box_arabic.webm",
+      "original_text": "Y\n0\n6\nG\nX\n5\n91\na\nH\n*IE\n7\nويكيبيديا العَربية\nفيعا يطييه",
+      "normalized_text": "Y 0 6 G X 5 91 a H *IE 7 ويكيبيديا العربية فيعا يطييه",
+      "anchor": {
+        "kind": "frame",
+        "start": 0.0,
+        "char_start": 0,
+        "char_end": 54
+      },
+      "engine": "paddleocr:ar",
+      "confidence": null,
+      "metadata": {
+        "title": "Internet-in-a-Box_(Arabic).webm",
+        "author": "Ala’a Najjar",
+        "license": "CC BY 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Internet-in-a-Box_%28Arabic%29.webm",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Internet-in-a-Box_%28Arabic%29.webm",
+        "sha256": "7954830689cca4e8c8136f44ab5cd88594751c3adfc432158c369a754cdd962c",
+        "modified": false
+      }
+    },
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000002",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/internet_in_a_box_arabic.webm",
+      "document": "internet_in_a_box_arabic.webm",
+      "original_text": "http://box.lan\n1200\nboxlanuhone/\n:\nInternet in a Box\nMedical Encyclopedia in English\nA complete collection of all health care,\nanatomy, and medication related topics from\nWikipedia in an offline format.\nLke Wikipedia all content is open access,\nmeaning that it is free to download, reuse,\nshare, and build upon.\nClick here to download\norg.kiwix.wikipedia.en.medicine.apk\nEnciclopedia Médica Offline de\nWikipedia\nSe trata de una coleccion completa de todos\nlos temas de Wikipedia sobre los cuidados\nrelacionados con la salud, la anatomia y la\nmedicacion, en un formato que no necesita\nيحتوي على موسوعة ويكيبيديا\nconexion a Internet.\nClick here to download\norg.kiwix.wikipedia.es.medicine.apk\nأو أجزاءِ منها، بالإضافة إلى\nويكيييديا الطية\nأخرى\nفيديوهات وكتب\nمقالات عن الرعاية الصحية متوافرة بدون اتصال\nبالإنترنت في كل مكان ويشكل مجائي\nClick here to download\norg.kiwix.wikipedia.a.medicine.apk\nfafehas efehra تentt\naeaa\nga  pr a faanh\na     ya\nO",
+      "normalized_text": "http://box.lan 1200 boxlanuhone/ : Internet in a Box Medical Encyclopedia in English A complete collection of all health care, anatomy, and medication related topics from Wikipedia in an offline format. Lke Wikipedia all content is open access, meaning that it is free to download, reuse, share, and build upon. Click here to download org.kiwix.wikipedia.en.medicine.apk Enciclopedia Médica Offline de Wikipedia Se trata de una coleccion completa de todos los temas de Wikipedia sobre los cuidados relacionados con la salud, la anatomia y la medicacion, en un formato que no necesita يحتوي علي موسوعة ويكيبيديا conexion a Internet. Click here to download org.kiwix.wikipedia.es.medicine.apk او اجزاء منها، بالاضافة الي ويكيييديا الطية اخري فيديوهات وكتب مقالات عن الرعاية الصحية متوافرة بدون اتصال بالانترنت في كل مكان ويشكل مجائي Click here to download org.kiwix.wikipedia.a.medicine.apk fafehas efehra تentt aeaa ga pr a faanh a ya O",
+      "anchor": {
+        "kind": "frame",
+        "start": 15.0,
+        "char_start": 0,
+        "char_end": 941
+      },
+      "engine": "paddleocr:ar",
+      "confidence": null,
+      "metadata": {
+        "title": "Internet-in-a-Box_(Arabic).webm",
+        "author": "Ala’a Najjar",
+        "license": "CC BY 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Internet-in-a-Box_%28Arabic%29.webm",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Internet-in-a-Box_%28Arabic%29.webm",
+        "sha256": "7954830689cca4e8c8136f44ab5cd88594751c3adfc432158c369a754cdd962c",
+        "modified": false
+      }
+    },
+    {
+      "id": "e604ca733d30f25a8e1a56e8-000003",
+      "source": "/Users/ushnah.abbasi/RAG-Anything/data/media_samples/internet_in_a_box_arabic.webm",
+      "document": "internet_in_a_box_arabic.webm",
+      "original_text": "9\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan\nتختلف\nتتوفر منه عدة تسخ وإصدارات\nبسعاتها،وآخرهاإصداربسعة\nغيغابايت\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan\nhttp://box.lan",
+      "normalized_text": "9 http://box.lan http://box.lan http://box.lan تختلف تتوفر منه عدة تسخ واصدارات بسعاتها،واخرهااصداربسعة غيغابايت http://box.lan http://box.lan http://box.lan http://box.lan",
+      "anchor": {
+        "kind": "frame",
+        "start": 30.0,
+        "char_start": 0,
+        "char_end": 172
+      },
+      "engine": "paddleocr:ar",
+      "confidence": null,
+      "metadata": {
+        "title": "Internet-in-a-Box_(Arabic).webm",
+        "author": "Ala’a Najjar",
+        "license": "CC BY 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Internet-in-a-Box_%28Arabic%29.webm",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Internet-in-a-Box_%28Arabic%29.webm",
+        "sha256": "7954830689cca4e8c8136f44ab5cd88594751c3adfc432158c369a754cdd962c",
+        "modified": false
+      }
+    }
+  ]
+}

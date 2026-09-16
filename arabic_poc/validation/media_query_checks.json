@@ -1,0 +1,31 @@
+[
+  {
+    "case": "audio",
+    "expected_passage_retrieved": true,
+    "exact_quote_check": true,
+    "cited_anchors": [
+      {
+        "kind": "speech",
+        "start": 0.0,
+        "end": 4.0,
+        "char_start": 0,
+        "char_end": 37
+      }
+    ],
+    "generation_review": "FAIL: Chinese text in Arabic answer"
+  },
+  {
+    "case": "video",
+    "expected_passage_retrieved": true,
+    "exact_quote_check": true,
+    "cited_anchors": [
+      {
+        "kind": "frame",
+        "start": 30.0,
+        "char_start": 0,
+        "char_end": 172
+      }
+    ],
+    "generation_review": "FAIL: claims a 4 GB capacity not present in retrieved extracted text; chosen citation does not support the full answer"
+  }
+]
