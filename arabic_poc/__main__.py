@@ -36,7 +36,8 @@ def command(*args):
 
 class Extractor:
     def __init__(self, asr_model='small', frame_seconds=30, ocr_engine='paddleocr',
-                 qwen_vl_model='models/qwen2.5-vl-3b', describe_images=False):
+                 qwen_vl_model='models/qwen2.5-vl-3b', describe_images=False, speech_only=False):
+        self.speech_only = speech_only
         self.asr_model = asr_model
         self.frame_seconds = frame_seconds
         self.ocr_engine = ocr_engine
@@ -86,12 +87,22 @@ class Extractor:
                         import whisper
                         self.asr = whisper.load_model(self.asr_model, device='cpu')
                 result = self.asr.transcribe(str(path), language='ar', fp16=False)
-                for segment in result['segments']:
+                segments = result['segments']
+                if self.speech_only:
+                    grouped = []
+                    for segment in segments:
+                        if grouped and segment['end'] - grouped[-1]['start'] <= 20:
+                            grouped[-1]['text'] += segment['text']
+                            grouped[-1]['end'] = segment['end']
+                        else:
+                            grouped.append(dict(segment))
+                    segments = grouped
+                for segment in segments:
                     start = max(0.0, float(segment['start']))
                     end = min(duration, float(segment['end']))
                     if start < end:
                         yield segment['text'], {'kind': 'speech', 'start': start, 'end': end}, f'whisper:{self.asr_model}'
-            if suffix in VIDEO:
+            if suffix in VIDEO and not self.speech_only:
                 with tempfile.TemporaryDirectory() as folder:
                     command('ffmpeg', '-v', 'error', '-i', str(path), '-vf',
                             f'fps=1/{self.frame_seconds}:start_time=0:round=up', str(Path(folder) / '%06d.png'))
@@ -258,7 +269,7 @@ async def run(args):
         save_json(manifest, settings)
     if args.action in {'extract', 'ingest'}:
         extractor = Extractor(args.asr_model, args.frame_seconds, args.ocr_engine,
-                              args.qwen_vl_model, args.describe_images)
+                              args.qwen_vl_model, args.describe_images, args.speech_only)
         files = []
         for value in args.paths:
             path = Path(value)
@@ -276,6 +287,10 @@ async def run(args):
                            'qwen_vl_model': args.qwen_vl_model, 'describe_images': args.describe_images,
                            'metadata': path.with_name(path.name + '.metadata.json').read_text()
                            if path.with_name(path.name + '.metadata.json').exists() else None}
+            if args.describe_images:
+                fingerprint['description_prompt_version'] = 2
+            if args.speech_only:
+                fingerprint['speech_only'] = True
             if target.exists():
                 saved = json.loads(target.read_text())
                 if saved['fingerprint'] != fingerprint:
@@ -342,6 +357,7 @@ def main():
         sub.add_argument('--qwen-vl-model', default='models/qwen2.5-vl-3b')
         sub.add_argument('--describe-images', action='store_true', help='Index Qwen visual descriptions for images and sampled video frames')
         sub.add_argument('--frame-seconds', type=float, default=30)
+        sub.add_argument('--speech-only', action='store_true', help='Transcribe media in up to 20-second speech windows; skip video frame OCR')
     ask = commands.add_parser('ask')
     ask.add_argument('question')
     ask.add_argument('--top-k', type=int, default=10)

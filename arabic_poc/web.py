@@ -16,9 +16,19 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = Path(__file__).parent / 'web_assets'
 DATASETS = {
+    'library': {'label': 'Library', 'storage': 'rag_storage_arabic_video_search', 'description': 'All sources', 'questions': ['Show me video of Makkah', 'أرني القبة الخضراء']},
+    'videos': {'label': 'All videos', 'storage': 'rag_storage_arabic_video_search',
+               'description': 'Search descriptions, speech, OCR and source labels together',
+               'questions': ['Show me video of Makkah', 'أرني فيديو للقبة الخضراء', 'Show me a video about Wikidata']},
+    'visual': {'label': 'Images & scenes', 'storage': 'rag_storage_arabic_visual',
+               'description': 'Visual descriptions and source labels; candidate matches',
+               'questions': ['أرني صورة باب الملك عبد العزيز في مكة', 'Show me video of the mosque courtyard']},
     'text': {'label': 'Arabic library', 'storage': 'rag_storage_arabic_demo',
              'description': 'A short fictional library document',
              'questions': ['من يشرف على فهرسة المخطوطات؟', 'متى تفتح المكتبة أبوابها؟']},
+    'spoken': {'label': 'Spoken Arabic', 'storage': 'rag_storage_arabic_spoken',
+               'description': 'A Tunisian tutorial lecture and a Syrian Arabic speaker',
+               'questions': ['ما هوايات المتحدث في الفيديو؟', 'ما الخدمة التي يذكرها المتحدث لاستخراج المعطيات من ويكي بيانات؟']},
     'media': {'label': 'Audio & video', 'storage': 'rag_storage_arabic_media_final',
               'description': 'Arabic narration, a greeting, and a captioned video',
               'questions': ['كيف يعرّف التسجيل الطائرة؟', 'ما المحتوى الموجود في جهاز الإنترنت في صندوق كما يوضح الفيديو؟']},
@@ -29,6 +39,12 @@ BUSY = threading.Lock()
 
 
 def catalog(dataset):
+    if dataset in ('videos', 'library'):
+        file = ROOT / DATASETS[dataset]['storage'] / 'index.json'
+        return json.loads(file.read_text())['records'] if file.exists() else []
+    if dataset == 'visual':
+        file = ROOT / DATASETS[dataset]['storage'] / 'visual-index.json'
+        return json.loads(file.read_text())['records'] if file.exists() else []
     return [r for p in sorted((ROOT / DATASETS[dataset]['storage'] / 'sources').glob('*.json'))
             for r in json.loads(p.read_text())['records']]
 
@@ -37,6 +53,7 @@ def public_record(row, dataset):
     item = dict(row)
     item.pop('source', None)
     item.pop('normalized_text', None)
+    item['source_key'] = __import__('hashlib').sha256(row['source'].encode()).hexdigest()[:24]
     item['media_url'] = f'/api/media/{dataset}/{row["id"]}'
     suffix = Path(row['source']).suffix.lower()
     item['media_type'] = ('video' if suffix in {'.webm', '.mp4', '.mov', '.mkv', '.avi'} else
@@ -51,7 +68,7 @@ def public_answer(answer, dataset, mode):
     return answer
 
 
-def run_question(job_id, dataset, question):
+def run_question(job_id, dataset, question, media_type='all'):
     started = time.monotonic()
     try:
         env = os.environ.copy()
@@ -62,8 +79,13 @@ def run_question(job_id, dataset, question):
                 value = settings.get(key)
                 if value and value != 'tiktoken-default':
                     env[key] = value
-        proc = subprocess.run([sys.executable, '-m', 'arabic_poc', '--storage',
-            DATASETS[dataset]['storage'], 'ask', question, '--top-k', '3'],
+        command = ([sys.executable, '-m', 'arabic_poc.visual', '--storage',
+            DATASETS[dataset]['storage'], 'search', question, '--media-type', media_type]
+            if dataset == 'visual' else [sys.executable, '-m', 'arabic_poc', '--storage',
+            DATASETS[dataset]['storage'], 'ask', question, '--top-k', '3'])
+        if dataset in ('videos', 'library'):
+            command = [sys.executable, '-m', 'arabic_poc.video_search', 'search', question, '--media-type', media_type if dataset == 'library' else 'video']
+        proc = subprocess.run(command,
             cwd=ROOT, env=env, capture_output=True, text=True, timeout=480)
         if proc.returncode:
             # Avoid exposing configuration or a traceback through the browser.
@@ -108,6 +130,10 @@ class Handler(BaseHTTPRequestHandler):
             datasets = []
             for key, spec in DATASETS.items():
                 rows = catalog(key)
+                if key == 'videos':
+                    rows = [r for r in rows if Path(r['source']).suffix.lower() in {'.mp4','.webm','.mov','.mkv','.avi'}]
+                if key in ('videos', 'library'):
+                    rows = list({r['video_id']: r for r in reversed(rows)}.values())
                 datasets.append(dict(id=key, label=spec['label'], description=spec['description'],
                     questions=spec['questions'], count=len(rows),
                     sources=[public_record(r, key) for r in rows]))
@@ -191,6 +217,9 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError()
             body = json.loads(self.rfile.read(length))
             dataset, question = body.get('dataset'), body.get('question', '')
+            media_type = body.get('media_type', 'all')
+            if media_type not in ('all', 'image', 'video', 'audio', 'document'):
+                raise ValueError()
             if dataset not in DATASETS or not isinstance(question, str) or not 1 <= len(question.strip()) <= 2000:
                 raise ValueError()
         except (ValueError, AttributeError, TypeError):
@@ -204,7 +233,7 @@ class Handler(BaseHTTPRequestHandler):
             if len(JOBS) >= 30:
                 JOBS.pop(next(iter(JOBS)))
             JOBS[job_id] = {'status': 'running'}
-        threading.Thread(target=run_question, args=(job_id, dataset, question.strip()), daemon=True).start()
+        threading.Thread(target=run_question, args=((job_id, dataset, question.strip(), media_type) if dataset in ('visual', 'library') else (job_id, dataset, question.strip())), daemon=True).start()
         self.json_response({'job_id': job_id}, 202)
 
 

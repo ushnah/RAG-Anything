@@ -134,5 +134,26 @@ class MediaChecks(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][1]['end'], 1.3)
 
+
+class SpokenVideoChecks(unittest.TestCase):
+    def test_speech_only_groups_without_frame_ocr(self):
+        from unittest.mock import patch, Mock
+        from types import SimpleNamespace
+        extractor = Extractor(speech_only=True)
+        extractor.asr = SimpleNamespace(transcribe=lambda *args, **kwargs: {'segments': [
+            {'text': ' مرحبا', 'start': 0, 'end': 5},
+            {'text': ' هذا شرح', 'start': 5, 'end': 12},
+            {'text': ' موضوع آخر', 'start': 20, 'end': 29}]})
+        extractor.image = Mock(side_effect=AssertionError('Frame OCR must not run'))
+        probe = json.dumps({'streams': [{'codec_type': 'video'}, {'codec_type': 'audio'}], 'format': {'duration': '29'}})
+        with patch('arabic_poc.__main__.shutil.which', return_value='/bin/tool'), patch('arabic_poc.__main__.command', return_value=probe) as command:
+            rows = list(extractor.extract(Path('lecture.mp4')))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0][0], ' مرحبا هذا شرح')
+        self.assertEqual(rows[0][1], {'kind': 'speech', 'start': 0, 'end': 12})
+        self.assertEqual(rows[1][1]['start'], 20)
+        self.assertEqual(command.call_count, 1)
+        extractor.image.assert_not_called()
+
 if __name__ == '__main__':
     unittest.main()

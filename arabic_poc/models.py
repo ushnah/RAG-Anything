@@ -6,17 +6,29 @@ class QwenParser:
     def __init__(self, model_id, describe=False):
         import torch
         from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+        local = Path(model_id)
+        index = local / 'model.safetensors.index.json'
+        if index.exists():
+            import json
+            shards = set(json.loads(index.read_text())['weight_map'].values())
+            missing = sorted(name for name in shards if not (local / name).is_file())
+            if missing:
+                raise FileNotFoundError('Incomplete vision model; missing: ' + ', '.join(missing))
         self.torch = torch
         self.device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_id, torch_dtype=torch.float32 if self.device == 'cpu' else torch.float16).to(self.device).eval()
-        self.processor = AutoProcessor.from_pretrained(model_id, min_pixels=256*28*28, max_pixels=1280*28*28)
+        self.processor = AutoProcessor.from_pretrained(model_id, min_pixels=256*28*28, max_pixels=(512 if describe else 1280)*28*28)
         self.describe = describe
 
     def parse_image(self, path, lang='ar'):
         from PIL import Image
         prompt = ('صف محتوى الصورة بالعربية وصفاً دقيقاً للبحث. لا تخمن أسماء الأشخاص أو الأحداث. '
-                  'اذكر الأشياء والعلاقات المرئية فقط.' if self.describe else
+                  'اذكر الأشياء والعلاقات المرئية فقط. سمّ الأشياء بوضوح واذكر ألوانها ومواقعها. '
+                  'اذكر اسم المعلم فقط إن كان واضحاً ومميزاً، وإلا صف شكله دون تخمين. '
+                  'لا تستنتج هوية شخص من وجهه. إذا ظهر اسم مكتوب في لافتة أو تعليق '
+                  'فانقله باعتباره نصاً مرئياً، ولا تفترض أنه اسم الشخص الظاهر. '
+                  'لا تستنتج الحركة من صورة ثابتة.' if self.describe else
                   'انسخ النص كما يظهر في الصورة فقط، مع الحركات والأرقام وترتيب القراءة. '
                   'لا تلخص ولا تصحح ولا تكمل النص من الذاكرة. اترك الأجزاء غير المقروءة دون تخمين.')
         with Image.open(path) as source:
@@ -24,9 +36,10 @@ class QwenParser:
         messages = [{'role': 'user', 'content': [{'type': 'image'}, {'type': 'text', 'text': prompt}]}]
         text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         inputs = self.processor(text=[text], images=[picture], return_tensors='pt').to(self.device)
+        limit = 512 if self.describe else 2048
         with self.torch.inference_mode():
-            output = self.model.generate(**inputs, max_new_tokens=2048, do_sample=False)
-        if output.shape[1] - inputs.input_ids.shape[1] >= 2048:
+            output = self.model.generate(**inputs, max_new_tokens=limit, do_sample=False)
+        if output.shape[1] - inputs.input_ids.shape[1] >= limit:
             raise RuntimeError('Qwen output reached its token limit; split/crop this page before indexing.')
         result = self.processor.batch_decode(output[:, inputs.input_ids.shape[1]:], skip_special_tokens=True,
                                              clean_up_tokenization_spaces=False)[0]

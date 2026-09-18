@@ -31,10 +31,10 @@ class WebChecks(unittest.TestCase):
         code, raw, _ = self.request('/api/catalog')
         self.assertEqual(code, 200)
         data = json.loads(raw)
-        self.assertEqual([d['id'] for d in data['datasets']], ['text', 'media'])
+        self.assertEqual([d['id'] for d in data['datasets']], ['library', 'videos', 'visual', 'text', 'spoken', 'media'])
         self.assertNotIn('"source":', raw.decode())
         self.assertNotIn('normalized_text', raw.decode())
-        self.assertEqual(data['datasets'][1]['count'], 14)
+        self.assertEqual(next(d for d in data['datasets'] if d['id']=='media')['count'], 14)
 
     def test_media_seek_range(self):
         row = next(r for r in web.catalog('media') if r['document']=='arabic_greeting.ogg')

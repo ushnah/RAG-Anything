@@ -81,3 +81,7 @@ memory-bank/
 CLAUDE.md
 
 models/
+*.json
+*.webm
+*.jpg
+*.mp4

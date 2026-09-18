@@ -8,7 +8,7 @@ From the repository root:
 
 Open **http://127.0.0.1:8765**. Keep this terminal and your Ollama server running. Stop the web server with Ctrl+C. For another port, add `--port 8766`.
 
-The UI uses the existing `rag_storage_arabic_demo` and `rag_storage_arabic_media_final` indexes. It reads each index's tokenizer/embedding settings automatically and uses the Qwen configuration in `.env`. No additional web dependencies are required.
+The UI uses `rag_storage_arabic_demo`, `rag_storage_arabic_media_final`, and `rag_storage_arabic_spoken`. The new **Spoken Arabic** collection contains a tutorial lecture and a Syrian-Arabic speaker; see [SPOKEN_VIDEOS.md](SPOKEN_VIDEOS.md). It reads each index's tokenizer/embedding settings automatically and uses the Qwen configuration in `.env`. No additional web dependencies are required.
 
 ## Suggested team-lead walkthrough
 
@@ -36,3 +36,7 @@ Live generation can take several minutes. The UI handles one live question at a 
 ## Live verification
 
 A real question was submitted through `/api/ask` and polled through `/api/jobs/...`. It completed in 36.4 seconds, identified مريم, and returned the exact quote `تشرف مريم على فهرسة المخطوطات` with the correct source. This verifies the web backend → existing CLI → local Qwen → citation response path; it does not establish general answer quality.
+
+## Visual media search
+
+The Images & scenes collection adds generated image/frame descriptions and source labels, with image/video filters. See [VISUAL_DEMO.md](VISUAL_DEMO.md) for setup, attribution, example queries, and limits.

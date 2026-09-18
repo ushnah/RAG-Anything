@@ -97,7 +97,7 @@ For retrieval, copy ordered passage IDs from the query's `sources` output and co
 .venv311/bin/python -m arabic_poc.evaluate evaluation.jsonl
 ```
 
-Reports per-case and macro-averaged CER/WER (raw and normalized), Recall@5/10, MRR, and Hit@10. Run extraction in separate storage directories for PaddleOCR and Qwen to compare identical inputs. This is an offline scorer, not an automatic corpus/question generator. Faithfulness and canonical religious-text verification still require human review. Kraken, MMORE, a web UI, and production concurrency are outside this first implementation.
+Reports per-case and macro-averaged CER/WER (raw and normalized), Recall@5/10, MRR, and Hit@10. Run extraction in separate storage directories for PaddleOCR and Qwen to compare identical inputs. This is an offline scorer, not an automatic corpus/question generator. Faithfulness and canonical religious-text verification still require human review. Kraken, MMORE, and production concurrency are outside this first implementation.
 
 Model API references: [BGE-M3](https://github.com/FlagOpen/FlagEmbedding/blob/master/research/BGE_M3/README.md), [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct).
 
@@ -111,3 +111,7 @@ The Arabic adapters convert each modality into source-anchored text before calli
 ## Local demo web UI
 
 Run `.venv311/bin/python -m arabic_poc.web` and open http://127.0.0.1:8765. See [WEB_DEMO.md](WEB_DEMO.md) for the team-demo walkthrough.
+
+## Image and video scene search
+
+See [VISUAL_DEMO.md](VISUAL_DEMO.md) for the **Images & scenes** collection: Qwen visual descriptions, BGE-M3 retrieval, source labels, and video timestamp playback. This separate media-search path returns candidates without generating an answer. It is a description-based baseline, not direct pixel embedding or verified landmark recognition.
