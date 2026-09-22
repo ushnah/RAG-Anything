@@ -33,6 +33,13 @@ DATASETS = {
               'description': 'Arabic narration, a greeting, and a captioned video',
               'questions': ['كيف يعرّف التسجيل الطائرة؟', 'ما المحتوى الموجود في جهاز الإنترنت في صندوق كما يوضح الفيديو؟']},
 }
+ACTIVE_INDEXES = ROOT / 'arabic_poc' / 'active_indexes.json'
+if ACTIVE_INDEXES.exists():
+    active = json.loads(ACTIVE_INDEXES.read_text())
+    for key, storage in active['datasets'].items():
+        DATASETS[key]['storage'] = storage
+        if key in ('text', 'spoken', 'media'):
+            DATASETS[key]['description'] = 'Refreshed multimodal corpus: graph + vector retrieval'
 JOBS = {}
 LOCK = threading.Lock()
 BUSY = threading.Lock()
@@ -90,15 +97,19 @@ def run_question(job_id, dataset, question, media_type='all'):
         if proc.returncode:
             # Avoid exposing configuration or a traceback through the browser.
             print(proc.stderr[-4000:], file=sys.stderr, flush=True)
-            raise RuntimeError('The local RAG request failed. Check Ollama and the server terminal.')
-        result = public_answer(json.loads(proc.stdout), dataset, 'live')
+            raise RuntimeError('The local RAG request failed. Check the configured model service and the server terminal.')
+        answer = json.loads(proc.stdout)
+        if dataset in ('library', 'videos', 'visual'):
+            from .answers import answer_from_evidence
+            answer = answer_from_evidence(question, answer, catalog(dataset))
+        result = public_answer(answer, dataset, 'live')
         with LOCK:
             JOBS[job_id].update(status='done', result=result, elapsed=round(time.monotonic()-started, 1))
     except Exception as exc:
         print(f'Demo query failed: {exc}', file=sys.stderr, flush=True)
         message = ('The request timed out. Try a shorter question or inspect the local model server.'
                    if isinstance(exc, subprocess.TimeoutExpired) else
-                   'The local RAG request failed. Check Ollama and the server terminal.')
+                   'The local RAG request failed. Check the configured model service and the server terminal.')
         with LOCK:
             JOBS[job_id].update(status='error', error=message)
     finally:

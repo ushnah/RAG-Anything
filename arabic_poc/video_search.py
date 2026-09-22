@@ -14,6 +14,11 @@ from .visual import embedding_model, rank
 ROOT = Path(__file__).resolve().parents[1]
 STORAGE = ROOT / 'rag_storage_arabic_video_search'
 INPUTS = ['rag_storage_arabic_visual', 'rag_storage_arabic_spoken', 'rag_storage_arabic_media_final', 'rag_storage_arabic_demo']
+ACTIVE_INDEXES = ROOT / 'arabic_poc' / 'active_indexes.json'
+if ACTIVE_INDEXES.exists():
+    active = json.loads(ACTIVE_INDEXES.read_text())
+    STORAGE = ROOT / active['search_storage']
+    INPUTS = active['inputs']
 
 
 def collect():
@@ -65,13 +70,19 @@ def group_matches(matches, top_k=3):
     return list(groups.values())[:top_k]
 
 
-# Keep whole words: Arabic normalization folds diacritics/alef variants but does
-# not stem words or match substrings inside unrelated words.
+# Match whole tokens, folding Arabic spelling and the definite article on
+# words of at least five letters; do not match arbitrary substrings.
 STOP = set(normalize('show me video videos of a the about find please أرني اعرض فيديو فيديوهات عن في من لي').split())
 
 
 def tokens(text):
-    return [t for t in re.findall(r"[^\W_]+", normalize(text).lower()) if t not in STOP]
+    words = [t for t in re.findall(r"[^\W_]+", normalize(text).lower()) if t not in STOP]
+    words = [t[2:] if t.startswith("ال") and len(t) >= 5 else t for t in words]
+    # Small, explicit variants for high-value Arabic landmark queries. This is
+    # not a stemmer: it avoids turning unrelated words into a match.
+    variants = {'بوابة': 'باب', 'بوابه': 'باب', 'منارة': 'ماذن', 'منارات': 'ماذن',
+                'مئذنة': 'ماذن', 'مئذنتان': 'ماذن', 'مئذنتين': 'ماذن'}
+    return [variants.get(word, word) for word in words]
 
 
 def aligned_evidence(seed, rows, tolerance=2.0):
@@ -119,10 +130,16 @@ def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_t
                 idf = math.log(1+(n-df[term]+.5)/(df[term]+.5))
                 bm25 += idf*freq*2.2/(freq+1.2*(.25+.75*len(doc)/max(average, 1)))
         coverage = len(query.intersection(counts))/max(len(query), 1)
-        score = .75*max(0, row['similarity']) + .25*(bm25/(bm25+2))
+        # Named landmarks often share broad visual terms (for example, gate or
+        # minaret). Reward precise Arabic term coverage so a complete name is
+        # preferred over a semantically similar but differently named place.
+        score = (.60*max(0, row['similarity']) + .25*(bm25/(bm25+2)) + .15*coverage)
         # Fixed, explicit policy; not a calibrated probability. Strong lexical
         # matches may pass only with semantic support as well.
-        qualifies = row['similarity'] >= min_score or (coverage == 1 and bool(query) and row['similarity'] >= .35)
+        semantic_floor = max(min_score, .7) if row['evidence_type'] == 'speech' and len(doc) < 5 and coverage == 0 else min_score
+        qualifies = (row['similarity'] >= semantic_floor or
+                     (coverage >= .55 and row['similarity'] >= .45) or
+                     (coverage == 1 and bool(query) and row['similarity'] >= .35))
         if qualifies:
             row.update(hybrid_score=round(score, 4), bm25=round(bm25, 4), keyword_coverage=coverage)
             accepted.append(row)
@@ -152,8 +169,8 @@ def main():
     search.add_argument('--min-score', type=float, default=float(os.getenv('VIDEO_MIN_SCORE', '.55')))
     search.add_argument('--nearby-seconds', type=float, default=2.0)
     args = parser.parse_args()
-    encoder, name = embedding_model()
     target = STORAGE / 'index.json'
+    encoder, name = embedding_model()
     if args.action == 'build':
         rows = collect()
         if not rows:

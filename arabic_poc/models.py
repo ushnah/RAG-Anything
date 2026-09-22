@@ -23,14 +23,20 @@ class QwenParser:
 
     def parse_image(self, path, lang='ar'):
         from PIL import Image
-        prompt = ('صف محتوى الصورة بالعربية وصفاً دقيقاً للبحث. لا تخمن أسماء الأشخاص أو الأحداث. '
-                  'اذكر الأشياء والعلاقات المرئية فقط. سمّ الأشياء بوضوح واذكر ألوانها ومواقعها. '
+        prompt = ('أنشئ وصفاً قصيراً قابلاً للبحث بالعربية: المشهد: ... | العناصر والعدد المرئي: ... | النص المرئي: ... | الموضع/الألوان: ... | تفاصيل معمارية: ... . '
+                  'اذكر العدد فقط إذا كان الشيء كاملاً وواضحاً في اللقطة؛ وإلا اكتب «العدد غير محسوم». '
+                  'اكتب «لا يوجد نص مقروء» إن لم يظهر نص. لا تتجاوز 110 كلمات ولا تكرر المعلومات. '
+                  'لا تخمن أسماء الأشخاص أو الأحداث. اذكر الأشياء والعلاقات المرئية فقط. '
                   'اذكر اسم المعلم فقط إن كان واضحاً ومميزاً، وإلا صف شكله دون تخمين. '
                   'لا تستنتج هوية شخص من وجهه. إذا ظهر اسم مكتوب في لافتة أو تعليق '
                   'فانقله باعتباره نصاً مرئياً، ولا تفترض أنه اسم الشخص الظاهر. '
                   'لا تستنتج الحركة من صورة ثابتة.' if self.describe else
                   'انسخ النص كما يظهر في الصورة فقط، مع الحركات والأرقام وترتيب القراءة. '
                   'لا تلخص ولا تصحح ولا تكمل النص من الذاكرة. اترك الأجزاء غير المقروءة دون تخمين.')
+        if self.describe and getattr(self, 'concise', False):
+            prompt = ('Describe the scene, visible objects and their exact count only when unambiguous, visible text, colours, layout, and architectural details. '
+                      'Use two short English sentences, at most 75 words. Say count uncertain if an object is cropped or unclear. '
+                      'Do not identify people, infer motion or guess a location. Do not repeat yourself.')
         with Image.open(path) as source:
             picture = source.convert('RGB')
         messages = [{'role': 'user', 'content': [{'type': 'image'}, {'type': 'text', 'text': prompt}]}]
@@ -79,3 +85,8 @@ class ArabicASR:
                 raise RuntimeError('ASR returned an incomplete timestamp; source was not cached.')
             segments.append({'text': chunk['text'], 'start': start, 'end': end})
         return {'segments': segments}
+
+
+def image_parser(model_id, describe=False):
+    from .remote import enabled, RemoteVision
+    return RemoteVision(describe=describe) if enabled('vision') else QwenParser(model_id, describe=describe)

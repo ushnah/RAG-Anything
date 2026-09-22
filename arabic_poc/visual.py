@@ -14,8 +14,9 @@ from .__main__ import IMAGES, VIDEO, command, normalize, save_json
 
 
 def build(paths, storage, model, interval):
-    from .models import QwenParser
-    vision = QwenParser(model, describe=True)
+    from .models import image_parser
+    from .remote import enabled
+    vision = image_parser(model, describe=True)
     files = sorted({p.resolve() for root in paths for p in
                     (root.rglob('*') if root.is_dir() else [root])
                     if p.suffix.lower() in IMAGES | VIDEO})
@@ -44,7 +45,7 @@ def build(paths, storage, model, interval):
                     anchor['start'] = start
                 rows.append(dict(id=f'{source_id}-{i:06d}', source=str(path), document=path.name,
                     original_text=description, normalized_text=normalize(description), anchor=anchor,
-                    engine=f'qwen-vl:generated:{model}', confidence=None, metadata=metadata,
+                    engine=('remote-vision:generated:' + os.environ['REMOTE_VISION_MODEL'] if enabled('vision') else f'qwen-vl:generated:{model}'), confidence=None, metadata=metadata,
                     source_label=metadata.get('visual_label', ''),
                     media_type='video' if start is not None else 'image'))
     # Publish only after extraction and embedding both succeed.

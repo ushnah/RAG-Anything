@@ -30,6 +30,31 @@ class VideoSearchChecks(unittest.TestCase):
         self.assertFalse(result['no_match'])
         self.assertGreater(result['sources'][0]['bm25'], 0)
 
+    def test_short_speech_does_not_override_no_match(self):
+        from .video_search import hybrid_search, tokens
+        self.assertEqual(tokens('القبة الخضراء'), tokens('قبة خضراء'))
+        row = dict(id='s', video_id='v', media_type='video',
+                   original_text='اشتركوا في القناة', evidence_type='speech',
+                   anchor={'start':0,'end':2})
+        index = {'records':[row], 'vectors':[[1,0]]}
+        self.assertTrue(hybrid_search(index, 'submarine underwater', [.6,.8])['no_match'])
+        self.assertFalse(hybrid_search(index, 'اشتركوا في القناة', [.6,.8])['no_match'])
+
+    def test_landmark_word_variants(self):
+        from .video_search import tokens
+        self.assertEqual(tokens('بوابة الملك'), tokens('باب الملك'))
+        self.assertEqual(tokens('مئذنتان'), tokens('منارات'))
+
+    def test_precise_landmark_words_outrank_broad_similarity(self):
+        from .video_search import hybrid_search
+        exact = dict(id='exact', video_id='exact', media_type='image',
+                     original_text='باب الملك عبد العزيز مئذنتان', evidence_type='visual_description', anchor={})
+        broad = dict(id='broad', video_id='broad', media_type='image',
+                     original_text='بوابة الملك فهد مآذن', evidence_type='visual_description', anchor={})
+        result = hybrid_search({'records': [exact, broad], 'vectors': [[.8, .6], [.9, .44]]},
+                               'كم عدد مآذن بوابة الملك عبد العزيز؟', [.8, .6], media_type='image')
+        self.assertEqual(result['sources'][0]['id'], 'exact')
+
     def test_temporal_boundaries(self):
         from .video_search import aligned_evidence
         speech = dict(id='s',video_id='v',evidence_type='speech',anchor={'start':10,'end':15},original_text='speech')

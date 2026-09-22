@@ -51,10 +51,14 @@ class Extractor:
         self.image_init()
         return self.ocr.parse_image(path, lang='ar')
 
+    def description_engine(self):
+        from .remote import enabled
+        return 'remote-vision:generated:' + os.environ['REMOTE_VISION_MODEL'] if enabled('vision') else 'qwen-vl:generated'
+
     def describe(self, path):
         if self.vision is None:
-            from .models import QwenParser
-            self.vision = QwenParser(self.qwen_vl_model, describe=True)
+            from .models import image_parser
+            self.vision = image_parser(self.qwen_vl_model, describe=True)
         return self.vision.parse_image(path)[0]['text']
 
     def extract(self, path):
@@ -71,7 +75,7 @@ class Extractor:
             for page, lines in pages.items():
                 yield '\n'.join(lines), {'kind': 'page', 'page': page + 1}, self.ocr_engine + ':ar'
             if suffix in IMAGES and self.describe_images:
-                yield self.describe(path), {'kind': 'visual_description'}, 'qwen-vl:generated'
+                yield self.describe(path), {'kind': 'visual_description'}, self.description_engine()
         elif suffix in AUDIO | VIDEO:
             if not shutil.which('ffmpeg') or not shutil.which('ffprobe'):
                 raise RuntimeError('Install ffmpeg (including ffprobe) to process media.')
@@ -80,7 +84,11 @@ class Extractor:
             duration = float(probe['format']['duration'])
             if any(s['codec_type'] == 'audio' for s in streams):
                 if self.asr is None:
-                    if '/' in self.asr_model:
+                    from .remote import enabled, RemoteASR
+                    if enabled('asr'):
+                        self.asr = RemoteASR()
+                        self.asr_model = 'remote:' + os.getenv('REMOTE_ASR_MODEL', 'whisper')
+                    elif '/' in self.asr_model:
                         from .models import ArabicASR
                         self.asr = ArabicASR(self.asr_model)
                     else:
@@ -110,11 +118,15 @@ class Extractor:
                         text = '\n'.join(item['text'] for item in self.image(frame))
                         yield text, {'kind': 'frame', 'start': index * self.frame_seconds}, self.ocr_engine + ':ar'
                         if self.describe_images:
-                            yield self.describe(frame), {'kind': 'visual_description', 'start': index * self.frame_seconds}, 'qwen-vl:generated'
+                            yield self.describe(frame), {'kind': 'visual_description', 'start': index * self.frame_seconds}, self.description_engine()
         else:
             raise ValueError(f'Unsupported file: {path}')
 
     def image_init(self):
+        from .remote import enabled, RemoteVision
+        if self.ocr is None and enabled('ocr'):
+            self.ocr = RemoteVision()
+            self.ocr_engine = 'remote:' + os.environ['REMOTE_VISION_MODEL']
         if self.ocr is None:
             if self.ocr_engine == 'qwen':
                 from .models import QwenParser
@@ -155,25 +167,27 @@ def records(path, extractor):
 async def runtime(storage):
     from dotenv import load_dotenv
     load_dotenv()
-    base_url = os.getenv('QWEN_BASE_URL')
-    model = os.getenv('QWEN_MODEL')
+    from .remote import enabled
+    remote = enabled('text')
+    base_url = os.getenv('REMOTE_BASE_URL' if remote else 'QWEN_BASE_URL')
+    model = os.getenv('REMOTE_TEXT_MODEL' if remote else 'QWEN_MODEL')
     if not base_url or not model:
-        raise ValueError('Set QWEN_BASE_URL and QWEN_MODEL in .env (see arabic_poc/env.example).')
+        raise ValueError('Set the selected backend BASE_URL and MODEL in .env (see arabic_poc/env.example).')
     from openai import AsyncOpenAI
     from FlagEmbedding import BGEM3FlagModel
     from lightrag.utils import EmbeddingFunc
     from raganything import RAGAnything, RAGAnythingConfig
-    client = AsyncOpenAI(base_url=base_url, api_key=os.getenv('QWEN_API_KEY', 'local'), timeout=180, max_retries=0)
+    client = AsyncOpenAI(base_url=base_url, api_key=os.getenv('REMOTE_API_KEY' if remote else 'QWEN_API_KEY', 'local'), timeout=180, max_retries=0)
 
     async def llm(prompt, system_prompt=None, history_messages=None, **kwargs):
         messages = ([{'role': 'system', 'content': system_prompt}] if system_prompt else [])
         messages += list(history_messages or []) + [{'role': 'user', 'content': prompt}]
         response = await client.chat.completions.create(model=model, messages=messages, temperature=0,
-            max_tokens=int(os.getenv('QWEN_MAX_TOKENS', '1536')),
+            max_tokens=int(os.getenv('REMOTE_MAX_TOKENS' if remote else 'QWEN_MAX_TOKENS', '4096' if remote else '1536')),
             **({'response_format': {'type': 'json_object'}} if kwargs.get('json_output') else {}))
         if response.choices[0].finish_reason == 'length':
             import logging
-            logging.getLogger(__name__).warning('Qwen reached QWEN_MAX_TOKENS; graph extraction may be incomplete and answer JSON still requires validation.')
+            logging.getLogger(__name__).warning('Generation reached its token limit; graph extraction may be incomplete and answer JSON still requires validation.')
         return response.choices[0].message.content or ''
 
     bge = BGEM3FlagModel(os.getenv('BGE_MODEL', 'BAAI/bge-m3'), use_fp16=False)
@@ -243,7 +257,7 @@ def checked_answer(raw, evidence):
                 return fallback
             if quote not in allowed[source_id]['original_text']:
                 return fallback
-        mentioned = set(re.findall(r'\[([a-f0-9]{24}-\d{6})\]', answer['answer']))
+        mentioned = set(re.findall(r'\[([^\[\]\n]+)\]', answer['answer']))
         if not mentioned and '[' not in answer['answer']:
             # Render references ourselves after verifying every original quote.
             answer['answer'] += ' ' + ' '.join(f'[{source_id}]' for source_id in dict.fromkeys(c['id'] for c in citations))
@@ -258,6 +272,7 @@ def checked_answer(raw, evidence):
 async def run(args):
     storage = Path(args.storage)
     sources = storage / 'sources'
+    from .remote import enabled
     if args.action in {'ingest', 'ask'}:
         from dotenv import load_dotenv
         load_dotenv()
@@ -287,6 +302,9 @@ async def run(args):
                            'qwen_vl_model': args.qwen_vl_model, 'describe_images': args.describe_images,
                            'metadata': path.with_name(path.name + '.metadata.json').read_text()
                            if path.with_name(path.name + '.metadata.json').exists() else None}
+            from .remote import enabled
+            if any(enabled(role) for role in ('ocr', 'vision', 'asr')):
+                fingerprint['remote_models'] = {key: os.getenv(key) for key in ('REMOTE_VISION_MODEL','REMOTE_ASR_MODEL','OCR_BACKEND','VISION_BACKEND','ASR_BACKEND')}
             if args.describe_images:
                 fingerprint['description_prompt_version'] = 2
             if args.speech_only:

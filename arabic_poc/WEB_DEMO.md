@@ -40,3 +40,33 @@ A real question was submitted through `/api/ask` and polled through `/api/jobs/.
 ## Visual media search
 
 The Images & scenes collection adds generated image/frame descriptions and source labels, with image/video filters. See [VISUAL_DEMO.md](VISUAL_DEMO.md) for setup, attribution, example queries, and limits.
+
+## Answers from retrieved evidence
+
+Library, video and visual searches now pass their retrieved passages to the configured text model (currently remote GPT-OSS 120B). The original hybrid retrieval stays unchanged. Answers include exact-quote citations; citations for nested matches link to their parent media card and seek to the evidence timestamp. Visual-description citations are explicitly labelled as generated descriptions.
+
+No-match searches skip generation. Insufficient evidence, invalid citations or provider failures retain the source cards without presenting an unvalidated answer. Exact quotation checks do not verify every claim's semantic support.
+
+## Expanded demo corpus
+
+`data/demo_additions` now includes openly licensed Wikimedia media with full sidecar attribution:
+
+- `wikilearn_arabic.webm`: a CC0 Arabic WikiLearn registration tutorial, useful for Arabic speech, UI text, QR code, browser and screen-search demonstrations.
+- `hajj_guide.webm`: a CC BY 3.0 Hajj explainer, useful for Mecca/Hajj, visible text and religious-domain retrieval demonstrations.
+
+New visual extraction uses a compact four-part Arabic description: `المشهد` (scene), `العناصر` (objects), `النص المرئي` (visible text), and `الموضع/الألوان` (layout and colours). It avoids face identity, inferred action and guessed location. Descriptions remain generated evidence and must be checked against the cited frame.
+
+## Landmark and architectural evidence
+
+The expanded sample collection includes a CC0 Green Dome image from Madinah and a public-domain image of illuminated minarets at King Fahd Gate in Makkah. New descriptions record five fields: scene, visible objects and count, visible text, placement/colours, and architectural details.
+
+Counts are only returned when the supporting visual description explicitly states a number or an unambiguous Arabic dual form. The answer generator otherwise says that the count is uncertain. For example, the existing King Abdul Aziz Gate image contains the visual evidence `مئذنتان طويلتان`; the query `كم عدد مآذن بوابة الملك عبد العزيز؟` retrieves the gate label, adds the linked visual description, and answers two minarets with that exact cited phrase.
+
+Useful client questions:
+
+- `كم عدد مآذن بوابة الملك عبد العزيز؟`
+- `أرني صورة لمآذن مضاءة في مكة`
+- `ما لون القبة الظاهرة في صورة المدينة؟`
+- `أرني صورة للقبة الخضراء في المدينة`
+
+These descriptions do not identify people from their faces. Named-person retrieval should use source metadata, visible text, captions, or transcript mentions.
