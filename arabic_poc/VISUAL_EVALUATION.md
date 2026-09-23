@@ -2,7 +2,7 @@
 
 ## Scope and reproducibility
 
-Four new public videos in `data/visual_evaluation/`, totalling about 226 seconds, are sampled every 20 seconds into 13 frames. Three short Madinah clips contribute one frame each; this is not a full-video coverage audit. The existing local Qwen2.5-VL-3B description prompt is unchanged. BGE-M3 retrieves video frames from the generated descriptions.
+Four new public videos in `data/visual_evaluation/`, totalling about 226 seconds, are sampled every 20 seconds into 13 frames. Three short Madinah clips contribute one frame each; this is not a full-video coverage audit. The configured vision backend generates descriptions and optional structured entities; BGE-M3 retrieves video frames from the generated descriptions and entity names.
 
 ```sh
 .venv311/bin/python -m arabic_poc.visual --storage rag_storage_arabic_visual_eval build data/visual_evaluation --frame-seconds 20

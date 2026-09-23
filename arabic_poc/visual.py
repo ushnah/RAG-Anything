@@ -11,6 +11,7 @@ from pathlib import Path
 import tempfile
 
 from .__main__ import IMAGES, VIDEO, command, normalize, save_json
+from .remote import flatten_entities, normalize_entities
 
 
 def build(paths, storage, model, interval):
@@ -39,12 +40,16 @@ def build(paths, storage, model, interval):
                           if i * interval < duration]
             for i, (frame, start) in enumerate(frames):
                 print(f'Describing {path.name}: {start}', flush=True)
-                description = vision.parse_image(frame)[0]['text']
+                result = vision.parse_image(frame)[0]
+                description = result.get('description', result['text'])
+                entities = normalize_entities(result.get('entities'))
+                entity_text = flatten_entities(entities)
                 anchor = {'kind': 'visual_description'}
                 if start is not None:
                     anchor['start'] = start
                 rows.append(dict(id=f'{source_id}-{i:06d}', source=str(path), document=path.name,
-                    original_text=description, normalized_text=normalize(description), anchor=anchor,
+                    original_text=description, normalized_text=normalize(description + ('\n' + entity_text if entity_text else '')),
+                    entities=entities, entity_text=entity_text, anchor=anchor,
                     engine=('remote-vision:generated:' + os.environ['REMOTE_VISION_MODEL'] if enabled('vision') else f'qwen-vl:generated:{model}'), confidence=None, metadata=metadata,
                     source_label=metadata.get('visual_label', ''),
                     media_type='video' if start is not None else 'image'))
@@ -62,7 +67,7 @@ def build(paths, storage, model, interval):
     vectors = encoder.encode([search_text(row) for row in rows], batch_size=4,
                              return_dense=True)['dense_vecs']
     save_json(storage / 'visual-index.json', {'schema': 1, 'embedding_model': model_id,
-        'frame_seconds': interval, 'description_prompt_version': 2, 'records': rows, 'vectors': np.asarray(vectors).tolist()})
+        'frame_seconds': interval, 'description_prompt_version': 3, 'records': rows, 'vectors': np.asarray(vectors).tolist()})
 
 
 def embedding_model():
@@ -75,7 +80,8 @@ def embedding_model():
 
 def search_text(row):
     # Labels describe the whole asset, not proof of its presence in every frame.
-    return normalize(row['original_text'] + '\nSource label: ' + row.get('source_label', ''))
+    return normalize(row['original_text'] + '\n' + row.get('entity_text', '') +
+                     '\nSource label: ' + row.get('source_label', ''))
 
 
 def rank(index, vector, media_type, top_k):

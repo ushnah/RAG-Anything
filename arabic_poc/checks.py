@@ -71,6 +71,22 @@ class Checks(unittest.TestCase):
             self.assertEqual(rows[1]['anchor']['start'], 2.5)
             self.assertEqual(rows[0]['metadata']['author'], 'المؤلف')
 
+    def test_visual_entities_are_indexed_without_losing_provenance(self):
+        class FakeExtractor:
+            def extract(self, path):
+                yield 'المشهد: مسجد', {'kind': 'visual_description', 'start': 20,
+                                       'entities': {'landmarks': ['المسجد النبوي']}}, 'remote-vision:generated:test'
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'frame.jpg'
+            path.write_bytes(b'dummy')
+            save_json(path.with_name('frame.jpg.metadata.json'), {'source_url': 'https://example.test'})
+            row = records(path, FakeExtractor())[0]
+            self.assertEqual(row['original_text'], 'المشهد: مسجد')
+            self.assertEqual(row['entities']['landmarks'], ['المسجد النبوي'])
+            self.assertIn('المسجد النبوي', row['normalized_text'])
+            self.assertEqual(row['anchor']['start'], 20)
+            self.assertEqual(row['metadata']['source_url'], 'https://example.test')
+
 
 
 class EvaluationChecks(unittest.TestCase):
@@ -101,7 +117,7 @@ class EvaluationChecks(unittest.TestCase):
                 self.describe = kwargs.get('describe', False)
             def parse_image(self, path, lang='ar'):
                 return [{'text': 'وصف آلي' if self.describe else 'النص الأصلي', 'page_idx': 0}]
-        with patch('arabic_poc.models.QwenParser', FakeQwen):
+        with patch.dict('os.environ', {'VISION_BACKEND': 'local'}), patch('arabic_poc.models.QwenParser', FakeQwen):
             rows = list(Extractor(ocr_engine='qwen', describe_images=True).extract(Path('image.png')))
             self.assertEqual(rows[0][2], 'qwen:ar')
             self.assertEqual(rows[1][1]['kind'], 'visual_description')

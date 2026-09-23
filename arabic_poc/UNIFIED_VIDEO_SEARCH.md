@@ -24,9 +24,9 @@ Storage: `rag_storage_arabic_video_search/index.json`. Input index names are lis
 
 ## Description guidance
 
-New Qwen descriptions are prompted to name visible objects and describe colors/positions; name landmarks only when distinctive and supported; preserve names on readable signs/captions as visible text; and avoid inferring identity from faces or motion from a still image. Prompt adherence is not guaranteed.
+Visual descriptions use the configured vision backend to name visible objects and describe colors/positions; extract structured entities for people, landmarks, places, organizations, and events; name landmarks only when distinctive and supported; preserve names on readable signs/captions as visible text; and avoid inferring identity from faces or motion from a still image. Prompt adherence is not guaranteed.
 
-Existing descriptions were not silently rewritten. New visual builds carry `description_prompt_version: 2`; the standard extraction fingerprint also records that version when descriptions are enabled. Re-extract into a fresh index to compare the changed prompt fairly. Old evaluation findings remain applicable to the old descriptions, not a benchmark of the revised prompt.
+Existing descriptions were not silently rewritten. New visual builds carry `description_prompt_version: 3`; the standard extraction fingerprint also records that version when descriptions are enabled. Re-extract into a fresh index to compare the changed prompt fairly. Old evaluation findings remain applicable to the old descriptions, not a benchmark of the revised prompt.
 
 ## Validation and limits
 

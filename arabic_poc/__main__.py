@@ -59,7 +59,9 @@ class Extractor:
         if self.vision is None:
             from .models import image_parser
             self.vision = image_parser(self.qwen_vl_model, describe=True)
-        return self.vision.parse_image(path)[0]['text']
+        item = self.vision.parse_image(path)[0]
+        return {'description': item.get('description', item['text']),
+                'entities': item.get('entities', {})}
 
     def extract(self, path):
         suffix = path.suffix.lower()
@@ -75,7 +77,8 @@ class Extractor:
             for page, lines in pages.items():
                 yield '\n'.join(lines), {'kind': 'page', 'page': page + 1}, self.ocr_engine + ':ar'
             if suffix in IMAGES and self.describe_images:
-                yield self.describe(path), {'kind': 'visual_description'}, self.description_engine()
+                result = self.describe(path)
+                yield result['description'], {'kind': 'visual_description', 'entities': result['entities']}, self.description_engine()
         elif suffix in AUDIO | VIDEO:
             if not shutil.which('ffmpeg') or not shutil.which('ffprobe'):
                 raise RuntimeError('Install ffmpeg (including ffprobe) to process media.')
@@ -118,7 +121,9 @@ class Extractor:
                         text = '\n'.join(item['text'] for item in self.image(frame))
                         yield text, {'kind': 'frame', 'start': index * self.frame_seconds}, self.ocr_engine + ':ar'
                         if self.describe_images:
-                            yield self.describe(frame), {'kind': 'visual_description', 'start': index * self.frame_seconds}, self.description_engine()
+                            result = self.describe(frame)
+                            yield result['description'], {'kind': 'visual_description', 'start': index * self.frame_seconds,
+                                                          'entities': result['entities']}, self.description_engine()
         else:
             raise ValueError(f'Unsupported file: {path}')
 
@@ -156,9 +161,15 @@ def records(path, extractor):
     for index, (text, anchor, engine) in enumerate(passages()):
         if not text.strip():
             continue
+        entities = anchor.get('entities', {}) if anchor.get('kind') == 'visual_description' else {}
+        from .remote import flatten_entities, normalize_entities
+        entities = normalize_entities(entities)
+        entity_text = flatten_entities(entities)
+        indexed_text = text + ('\n' + entity_text if entity_text else '')
         rows.append(dict(id=f'{source_id}-{index:06d}', source=str(path.resolve()),
-                         document=path.name, original_text=text, normalized_text=normalize(text),
-                         anchor=anchor, engine=engine, confidence=None, metadata=metadata))
+                         document=path.name, original_text=text, normalized_text=normalize(indexed_text),
+                         entities=entities, entity_text=entity_text, anchor=anchor,
+                         engine=engine, confidence=None, metadata=metadata))
     if not rows:
         raise ValueError(f'No text extracted from {path}; source was not indexed.')
     return rows
@@ -298,7 +309,7 @@ async def run(args):
             target = sources / f'{key}.json'
             fingerprint = {'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
                            'asr_model': args.asr_model, 'frame_seconds': args.frame_seconds,
-                           'schema_version': 5, 'ocr_engine': args.ocr_engine,
+                           'schema_version': 6, 'ocr_engine': args.ocr_engine,
                            'qwen_vl_model': args.qwen_vl_model, 'describe_images': args.describe_images,
                            'metadata': path.with_name(path.name + '.metadata.json').read_text()
                            if path.with_name(path.name + '.metadata.json').exists() else None}
@@ -306,7 +317,7 @@ async def run(args):
             if any(enabled(role) for role in ('ocr', 'vision', 'asr')):
                 fingerprint['remote_models'] = {key: os.getenv(key) for key in ('REMOTE_VISION_MODEL','REMOTE_ASR_MODEL','OCR_BACKEND','VISION_BACKEND','ASR_BACKEND')}
             if args.describe_images:
-                fingerprint['description_prompt_version'] = 2
+                fingerprint['description_prompt_version'] = 3
             if args.speech_only:
                 fingerprint['speech_only'] = True
             if target.exists():
