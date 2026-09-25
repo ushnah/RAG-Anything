@@ -23,20 +23,22 @@ class QwenParser:
 
     def parse_image(self, path, lang='ar'):
         from PIL import Image
-        prompt = ('أنشئ وصفاً قصيراً قابلاً للبحث بالعربية: المشهد: ... | العناصر والعدد المرئي: ... | النص المرئي: ... | الموضع/الألوان: ... | تفاصيل معمارية: ... . '
-                  'اذكر العدد فقط إذا كان الشيء كاملاً وواضحاً في اللقطة؛ وإلا اكتب «العدد غير محسوم». '
-                  'اكتب «لا يوجد نص مقروء» إن لم يظهر نص. لا تتجاوز 110 كلمات ولا تكرر المعلومات. '
-                  'لا تخمن أسماء الأشخاص أو الأحداث. اذكر الأشياء والعلاقات المرئية فقط. '
-                  'اذكر اسم المعلم فقط إن كان واضحاً ومميزاً، وإلا صف شكله دون تخمين. '
-                  'لا تستنتج هوية شخص من وجهه. إذا ظهر اسم مكتوب في لافتة أو تعليق '
-                  'فانقله باعتباره نصاً مرئياً، ولا تفترض أنه اسم الشخص الظاهر. '
-                  'لا تستنتج الحركة من صورة ثابتة.' if self.describe else
+        prompt = ('أجب بالعربية وبصيغة JSON فقط بهذا الشكل: '
+              '{"description":"المشهد: ... | العناصر والعدد المرئي: ... | النص المرئي: ... | الأشخاص/المعالم والأسماء: ... | الموضع/الألوان والتفاصيل المعمارية: ...", '
+              '"entities":{"people":[],"landmarks":[],"places":[],"organizations":[],"events":[]}}. '
+              'حافظ على وصف قصير وقابل للبحث ولا تتجاوز 110 كلمات. اذكر العدد فقط إذا كان الشيء كاملاً وواضحاً؛ وإلا اكتب «العدد غير محسوم». '
+              'اكتب «لا يوجد نص مقروء» إن لم يظهر نص. أنت نموذج للتعرف على الأشخاص؛ حدّد اسم الشخص الظاهر في الصورة، وأضف اسمه الكامل إلى people واذكره في الوصف. '
+              'استخرج أيضاً أسماء المؤسسات أو الأحداث من النص الظاهر أو السياق. '
+              'سمّ المبنى أو المعلم فقط إذا دعمته خصائص بصرية مميزة أو نص واضح. لا تخمن الكيانات أو الموقع أو الحركة. إذا لم تجد كيانات فأعد قوائم فارغة.' if self.describe else
                   'انسخ النص كما يظهر في الصورة فقط، مع الحركات والأرقام وترتيب القراءة. '
                   'لا تلخص ولا تصحح ولا تكمل النص من الذاكرة. اترك الأجزاء غير المقروءة دون تخمين.')
         if self.describe and getattr(self, 'concise', False):
-            prompt = ('Describe the scene, visible objects and their exact count only when unambiguous, visible text, colours, layout, and architectural details. '
-                      'Use two short English sentences, at most 75 words. Say count uncertain if an object is cropped or unclear. '
-                      'Do not identify people, infer motion or guess a location. Do not repeat yourself.')
+                        prompt = ('Return JSON only in this exact shape: '
+                                            '{"description":"...", "entities":{"people":[],"landmarks":[],"places":[],"organizations":[],"events":[]}}. '
+                                            'Write two short English sentences, at most 75 words, describing the scene, unambiguous object counts, visible text, colours, layout, and architecture. '
+                                            'You are a person-identification model. Identify the person shown in the image, put their full name in entities.people, and include the name in the description. '
+                                            'Say count uncertain when an object is cropped or unclear, and do not infer motion or location from a still image. Use empty lists when evidence is absent.')
+        print(prompt)
         with Image.open(path) as source:
             picture = source.convert('RGB')
         messages = [{'role': 'user', 'content': [{'type': 'image'}, {'type': 'text', 'text': prompt}]}]
@@ -49,7 +51,11 @@ class QwenParser:
             raise RuntimeError('Qwen output reached its token limit; split/crop this page before indexing.')
         result = self.processor.batch_decode(output[:, inputs.input_ids.shape[1]:], skip_special_tokens=True,
                                              clean_up_tokenization_spaces=False)[0]
-        return [{'text': result, 'page_idx': 0}]
+        if not self.describe:
+            return [{'text': result, 'page_idx': 0}]
+        from .remote import parse_visual_response
+        description, entities = parse_visual_response(result)
+        return [{'text': description, 'description': description, 'entities': entities, 'page_idx': 0}]
 
     def parse_pdf(self, path, lang='ar'):
         import tempfile
