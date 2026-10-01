@@ -38,3 +38,40 @@ Local Qwen2.5-VL-3B generated five descriptions: the gate photo and video frames
 Two live HTTP queries completed: Arabic gate-image search in 10.5 seconds and English Kaaba-video search in 9.5 seconds. All returned media obeyed the selected image/video filter; their HTTP byte-range requests succeeded. These are tiny-corpus smoke tests, not retrieval-accuracy measurements. Twenty regression checks passed, and JavaScript syntax was checked. No browser visual QA was performed.
 
 **Vision quality is limited:** the gate photo description confuses minarets with domes and speculates about weather. The 40-second mosque frame is wrongly described as a sports stadium; other frame descriptions also contain errors. The original model outputs are preserved in [validation/visual_extraction.json](validation/visual_extraction.json). Live responses are in [validation/visual_query_checks.json](validation/visual_query_checks.json). Exact landmark recognition and motion understanding have not been established.
+
+## Refresh video scenes in the active library
+
+Refresh descriptions and Arabic entities for existing videos and add a local video:
+
+```sh
+.venv/bin/python -m arabic_poc.index_videos --refresh-library --frame-seconds 20 'data/The Crown Prince Muhmmad Bin Salman  Arrived in Kabah ｜｜inside Kabah washing [Ar2cKrUliuc].webm'
+```
+
+This updates the app's combined and visual search indexes, preserves existing
+speech/OCR, and uses `FACE_GALLERY_PATH` when configured. It adds sampled scene
+descriptions for a new video; it does not generate a new transcript or rebuild
+the LightRAG graph. Frame timestamps use the specified sampling interval.
+Completed descriptions and backups are saved in the printed run directory. To
+resume an interrupted run, repeat the same command with `--resume RUN_DIRECTORY`.
+
+## Bilingual person names
+
+`arabic_poc/person_aliases.json` maps explicit Arabic/English spellings and face-gallery
+IDs to a canonical person ID. Each entry contains `name_ar`, `name_en`, and
+`aliases`. Add known spellings here; avoid ambiguous given names such as محمد.
+Existing extracted names remain unchanged. New source records save the resolved
+mapping in `person_entities`; retrieval also resolves existing records dynamically,
+so mapping updates do not require regenerating descriptions or embeddings.
+
+The app's hybrid search includes these aliases in keyword matching and accepts a
+complete alias query as a name match. This is name normalization, not new face
+identification. The existing three-source result limit still applies.
+
+## English queries
+
+The app's hybrid library/video search expands queries containing English letters
+with an Arabic translation from the configured remote text model. It searches both
+versions independently, merges duplicate files/scenes, and retains the existing
+three-source limit. Arabic-only queries skip translation. Translation errors fall
+back to the original query; the search response includes `query_variants` for
+inspection. This adds a model request for English queries and requires no reindexing.

@@ -47,6 +47,11 @@ video = [
     "faster-whisper>=1.0.0",
     "opencv-python>=4.8.0",
 ]
+face = [
+    "insightface>=0.7.3",
+    "onnxruntime>=1.16.0",
+    "numpy>=1.24.0",
+]
 all = [
     "Pillow>=10.0.0",
     "reportlab>=4.0.0",

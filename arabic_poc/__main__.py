@@ -36,7 +36,9 @@ def command(*args):
 
 class Extractor:
     def __init__(self, asr_model='small', frame_seconds=30, ocr_engine='paddleocr',
-                 qwen_vl_model='models/qwen2.5-vl-3b', describe_images=False, speech_only=False):
+                 qwen_vl_model='models/qwen2.5-vl-3b', describe_images=False, speech_only=False,
+                 face_gallery_path=None, face_model=None, face_match_threshold=None,
+                 min_face_size=None, min_detection_score=None):
         self.speech_only = speech_only
         self.asr_model = asr_model
         self.frame_seconds = frame_seconds
@@ -46,6 +48,13 @@ class Extractor:
         self.vision = None
         self.ocr = None
         self.asr = None
+        self.face_gallery_path = face_gallery_path or os.getenv('FACE_GALLERY_PATH')
+        self.face_model = face_model or os.getenv('FACE_MODEL', 'buffalo_l')
+        self.face_match_threshold = face_match_threshold if face_match_threshold is not None else float(os.getenv('FACE_MATCH_THRESHOLD', '0.5'))
+        self.min_face_size = min_face_size if min_face_size is not None else int(os.getenv('MIN_FACE_SIZE', '40'))
+        self.min_detection_score = min_detection_score if min_detection_score is not None else float(os.getenv('MIN_DETECTION_SCORE', '0.6'))
+        self.face_identifier = None
+        self.face_identifier_initialized = False
 
     def image(self, path):
         self.image_init()
@@ -59,9 +68,33 @@ class Extractor:
         if self.vision is None:
             from .models import image_parser
             self.vision = image_parser(self.qwen_vl_model, describe=True)
-        item = self.vision.parse_image(path)[0]
+        person_matches = self.identify_faces(path)
+        people = list(dict.fromkeys(match['name'] for match in person_matches if match.get('name')))
+        person_context = ({'people': people, 'person_matches': person_matches,
+                           'source': 'face_recognition'} if people else None)
+        item = self.vision.parse_image(path, person_context=person_context)[0] if person_context else self.vision.parse_image(path)[0]
+        entities = item.get('entities', {})
+        if people:
+            from .remote import merge_person_context
+            entities = merge_person_context(entities, person_context)
         return {'description': item.get('description', item['text']),
-                'entities': item.get('entities', {})}
+                'entities': entities,
+                'person_matches': person_matches}
+
+    def identify_faces(self, path):
+        if self.face_identifier_initialized or not self.face_gallery_path:
+            return self.face_identifier.identify_faces(path) if self.face_identifier else []
+        self.face_identifier_initialized = True
+        try:
+            from .face_identifier import FaceIdentifier
+            self.face_identifier = FaceIdentifier(
+                self.face_gallery_path, model_name=self.face_model,
+                threshold=self.face_match_threshold, min_face_size=self.min_face_size,
+                min_detection_score=self.min_detection_score)
+        except Exception as exc:
+            print(f'Face identification disabled: {type(exc).__name__}: {exc}', flush=True)
+            return []
+        return self.face_identifier.identify_faces(path)
 
     def extract(self, path):
         suffix = path.suffix.lower()
@@ -78,7 +111,14 @@ class Extractor:
                 yield '\n'.join(lines), {'kind': 'page', 'page': page + 1}, self.ocr_engine + ':ar'
             if suffix in IMAGES and self.describe_images:
                 result = self.describe(path)
-                yield result['description'], {'kind': 'visual_description', 'entities': result['entities']}, self.description_engine()
+                yield result['description'], {'kind': 'visual_description', 'entities': result['entities'],
+                                              'person_matches': result['person_matches']}, self.description_engine()
+            elif suffix in IMAGES:
+                matches = self.identify_faces(path)
+                names = [item['name'] for item in matches if item.get('name')]
+                if names:
+                    yield 'Recognized people: ' + ', '.join(dict.fromkeys(names)), {
+                        'kind': 'face_enrichment', 'person_matches': matches}, 'face-recognition:generated'
         elif suffix in AUDIO | VIDEO:
             if not shutil.which('ffmpeg') or not shutil.which('ffprobe'):
                 raise RuntimeError('Install ffmpeg (including ffprobe) to process media.')
@@ -123,7 +163,15 @@ class Extractor:
                         if self.describe_images:
                             result = self.describe(frame)
                             yield result['description'], {'kind': 'visual_description', 'start': index * self.frame_seconds,
-                                                          'entities': result['entities']}, self.description_engine()
+                                                          'entities': result['entities'],
+                                                          'person_matches': result['person_matches']}, self.description_engine()
+                        else:
+                            matches = self.identify_faces(frame)
+                            names = [item['name'] for item in matches if item.get('name')]
+                            if names:
+                                yield 'Recognized people: ' + ', '.join(dict.fromkeys(names)), {
+                                    'kind': 'face_enrichment', 'start': index * self.frame_seconds,
+                                    'person_matches': matches}, 'face-recognition:generated'
         else:
             raise ValueError(f'Unsupported file: {path}')
 
@@ -164,11 +212,16 @@ def records(path, extractor):
         entities = anchor.get('entities', {}) if anchor.get('kind') == 'visual_description' else {}
         from .remote import flatten_entities, normalize_entities
         entities = normalize_entities(entities)
+        from .person_aliases import resolve_people
+        person_entities = resolve_people(entities)
         entity_text = flatten_entities(entities)
-        indexed_text = text + ('\n' + entity_text if entity_text else '')
+        person_names = list(dict.fromkeys(item.get('name') for item in anchor.get('person_matches', [])
+                        if isinstance(item, dict) and item.get('name')))
+        person_text = 'Recognized people: ' + ', '.join(person_names) if person_names else ''
+        indexed_text = text + ('\n' + entity_text if entity_text else '') + ('\n' + person_text if person_text else '')
         rows.append(dict(id=f'{source_id}-{index:06d}', source=str(path.resolve()),
                          document=path.name, original_text=text, normalized_text=normalize(indexed_text),
-                         entities=entities, entity_text=entity_text, anchor=anchor,
+                         entities=entities, person_entities=person_entities, entity_text=entity_text, anchor=anchor,
                          engine=engine, confidence=None, metadata=metadata))
     if not rows:
         raise ValueError(f'No text extracted from {path}; source was not indexed.')
@@ -284,9 +337,10 @@ async def run(args):
     storage = Path(args.storage)
     sources = storage / 'sources'
     from .remote import enabled
-    if args.action in {'ingest', 'ask'}:
+    if args.action in {'extract', 'ingest', 'ask'}:
         from dotenv import load_dotenv
         load_dotenv()
+    if args.action in {'ingest', 'ask'}:
         settings = {key: os.getenv(key, default) for key, default in (
             ('BGE_MODEL', 'BAAI/bge-m3'), ('RAG_TOKENIZER_MODEL', 'tiktoken-default'))}
         manifest = storage / 'index-settings.json'
@@ -309,8 +363,13 @@ async def run(args):
             target = sources / f'{key}.json'
             fingerprint = {'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
                            'asr_model': args.asr_model, 'frame_seconds': args.frame_seconds,
-                           'schema_version': 6, 'ocr_engine': args.ocr_engine,
+                           'schema_version': 7, 'ocr_engine': args.ocr_engine,
                            'qwen_vl_model': args.qwen_vl_model, 'describe_images': args.describe_images,
+                           'face_gallery_path': os.getenv('FACE_GALLERY_PATH'),
+                           'face_model': os.getenv('FACE_MODEL', 'buffalo_l'),
+                           'face_match_threshold': os.getenv('FACE_MATCH_THRESHOLD', '0.5'),
+                           'min_face_size': os.getenv('MIN_FACE_SIZE', '40'),
+                           'min_detection_score': os.getenv('MIN_DETECTION_SCORE', '0.6'),
                            'metadata': path.with_name(path.name + '.metadata.json').read_text()
                            if path.with_name(path.name + '.metadata.json').exists() else None}
             from .remote import enabled

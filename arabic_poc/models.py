@@ -21,13 +21,13 @@ class QwenParser:
         self.processor = AutoProcessor.from_pretrained(model_id, min_pixels=256*28*28, max_pixels=(512 if describe else 1280)*28*28)
         self.describe = describe
 
-    def parse_image(self, path, lang='ar'):
+    def parse_image(self, path, lang='ar', person_context=None):
         from PIL import Image
         prompt = ('أجب بالعربية وبصيغة JSON فقط بهذا الشكل: '
               '{"description":"المشهد: ... | العناصر والعدد المرئي: ... | النص المرئي: ... | الأشخاص/المعالم والأسماء: ... | الموضع/الألوان والتفاصيل المعمارية: ...", '
               '"entities":{"people":[],"landmarks":[],"places":[],"organizations":[],"events":[]}}. '
               'حافظ على وصف قصير وقابل للبحث ولا تتجاوز 110 كلمات. اذكر العدد فقط إذا كان الشيء كاملاً وواضحاً؛ وإلا اكتب «العدد غير محسوم». '
-              'اكتب «لا يوجد نص مقروء» إن لم يظهر نص. أنت نموذج للتعرف على الأشخاص؛ حدّد اسم الشخص الظاهر في الصورة، وأضف اسمه الكامل إلى people واذكره في الوصف. '
+              'اكتب «لا يوجد نص مقروء» إن لم يظهر نص. لا تحدد هوية شخص من وجهه أو مظهره. استخرج أسماء الأشخاص فقط من نص مقروء أو سياق مقدم مع توضيح المصدر. '
               'استخرج أيضاً أسماء المؤسسات أو الأحداث من النص الظاهر أو السياق. '
               'سمّ المبنى أو المعلم فقط إذا دعمته خصائص بصرية مميزة أو نص واضح. لا تخمن الكيانات أو الموقع أو الحركة. إذا لم تجد كيانات فأعد قوائم فارغة.' if self.describe else
                   'انسخ النص كما يظهر في الصورة فقط، مع الحركات والأرقام وترتيب القراءة. '
@@ -36,9 +36,11 @@ class QwenParser:
                         prompt = ('Return JSON only in this exact shape: '
                                             '{"description":"...", "entities":{"people":[],"landmarks":[],"places":[],"organizations":[],"events":[]}}. '
                                             'Write two short English sentences, at most 75 words, describing the scene, unambiguous object counts, visible text, colours, layout, and architecture. '
-                                            'You are a person-identification model. Identify the person shown in the image, put their full name in entities.people, and include the name in the description. '
+                                            'Do not identify people from faces or appearance. Extract names only from readable text or supplied context and state the source. '
                                             'Say count uncertain when an object is cropped or unclear, and do not infer motion or location from a still image. Use empty lists when evidence is absent.')
-        print(prompt)
+        if self.describe:
+            from .remote import person_context_prompt
+            prompt += person_context_prompt(person_context)
         with Image.open(path) as source:
             picture = source.convert('RGB')
         messages = [{'role': 'user', 'content': [{'type': 'image'}, {'type': 'text', 'text': prompt}]}]
@@ -53,8 +55,9 @@ class QwenParser:
                                              clean_up_tokenization_spaces=False)[0]
         if not self.describe:
             return [{'text': result, 'page_idx': 0}]
-        from .remote import parse_visual_response
+        from .remote import merge_person_context, parse_visual_response
         description, entities = parse_visual_response(result)
+        entities = merge_person_context(entities, person_context)
         return [{'text': description, 'description': description, 'entities': entities, 'page_idx': 0}]
 
     def parse_pdf(self, path, lang='ar'):

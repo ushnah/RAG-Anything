@@ -55,6 +55,32 @@ class VideoSearchChecks(unittest.TestCase):
                                'كم عدد مآذن بوابة الملك عبد العزيز؟', [.8, .6], media_type='image')
         self.assertEqual(result['sources'][0]['id'], 'exact')
 
+    def test_arabic_entity_matches_english_description_with_low_similarity(self):
+        from .video_search import hybrid_search
+        row = dict(id='poster', video_id='poster', media_type='image',
+                   original_text='Speech by Abdul Rahman Al-Sudais',
+                   entities={'people': ['عبد الرحمن بن عبد العزيز السديس']},
+                   evidence_type='visual_description', anchor={})
+        index = {'records': [row], 'vectors': [[0, 1]]}
+        result = hybrid_search(index, 'السديس', [1, 0], media_type='image')
+        self.assertEqual(result['sources'][0]['id'], 'poster')
+        self.assertTrue(result['sources'][0]['entity_match'])
+        self.assertGreater(result['sources'][0]['bm25'], 0)
+        self.assertTrue(hybrid_search(index, 'سد', [1, 0], media_type='image')['no_match'])
+        self.assertTrue(hybrid_search(index, 'السديس', [1, 0], media_type='video')['no_match'])
+
+    def test_video_entity_match_preserves_scene_and_entities(self):
+        from .video_search import hybrid_search
+        person = {'people': ['محمد بن سلمان']}
+        row = dict(id='scene', video_id='video', media_type='video',
+                   original_text='A group standing indoors', entities=person,
+                   evidence_type='visual_description', anchor={'kind': 'visual_description', 'start': 40})
+        result = hybrid_search({'records': [row], 'vectors': [[0, 1]]},
+                               'محمد بن سلمان', [1, 0], media_type='video')
+        match = result['sources'][0]['matches'][0]
+        self.assertEqual(match['anchor']['start'], 40)
+        self.assertEqual(match['entities'], person)
+
     def test_temporal_boundaries(self):
         from .video_search import aligned_evidence
         speech = dict(id='s',video_id='v',evidence_type='speech',anchor={'start':10,'end':15},original_text='speech')

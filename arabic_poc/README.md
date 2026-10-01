@@ -63,6 +63,51 @@ Use your existing local Qwen2.5-VL model for difficult scans. This is the generi
 
 `--describe-images` adds Arabic visual descriptions for standalone images and sampled video frames (not PDF figures). They are labeled `qwen-vl:generated` and `kind=visual_description`; these are model interpretations, not transcriptions. They must not be treated as exact source quotations. OCR and descriptions can load separate model instances; leave descriptions off on memory-constrained machines. Qwen uses CUDA, MPS, or CPU automatically. Pages reaching the output limit fail rather than silently indexing truncated output.
 
+### Reference face identification
+
+Face identification is a separate optional enrichment step. It runs on the same sampled video frames already sent to OCR and the visual model; it does not replace the remote VLM or ask it to identify faces. Install the optional backend with:
+
+```sh
+pip install -e '.[face]'
+```
+
+Create a gallery whose directory names are the canonical identifiers:
+
+```text
+reference_faces/
+├── sheikh_x/
+│   ├── 001.jpg
+│   └── 002.jpg
+└── sheikh_y/
+	└── 001.jpg
+```
+
+To seed the initial Saudi scholars and leaders from Wikimedia Commons, run this from the repository root when internet access is available:
+
+```sh
+python scripts/download_reference_faces.py --gallery reference_faces --limit 3
+```
+
+The downloader writes `sources.json` inside each person directory with the Commons page, image URL, artist, and reported license. Add or override a person with `--person folder_name=Search Name`. Review the downloaded candidates before using them; the face gallery loader will skip images with no face or multiple faces.
+
+Configure it in `.env`:
+
+```env
+FACE_GALLERY_PATH=reference_faces
+FACE_MODEL=buffalo_l
+FACE_MATCH_THRESHOLD=0.5
+MIN_FACE_SIZE=40
+MIN_DETECTION_SCORE=0.6
+```
+
+InsightFace/ArcFace generates and caches one normalized embedding per valid reference image. Images with no face or multiple faces are skipped. Each sampled frame receives a separate `person_matches` field such as `{"name":"sheikh_x","similarity":0.83,"source":"face_recognition"}`; unknown faces use `"name": null`. Known names are appended to the searchable normalized text, while OCR text, VLM entities, timestamps, source paths, and document metadata remain unchanged. The threshold is a starting configuration, not a universal value; calibrate it with held-out images from the intended camera, pose, and lighting conditions.
+
+This identifies only people represented in the local gallery and should not be treated as ground truth without review. InsightFace model-pack licensing and any gallery image permissions must be checked for the deployment; the package and pretrained model assets may have separate licensing terms.
+
+For a single image, run `./.venv/bin/python -m arabic_poc.sheikh_poc path/to/frame.jpg`. The interactive walkthrough is `arabic_poc/sheikh_poc.ipynb`; it prints the name-only `{"people": [...]}` result and the enriched visual description separately.
+
+To update face entities in an already-saved visual-lab result after changing the reference gallery, without regenerating descriptions, run `./.venv/bin/python -m arabic_poc.sheikh_poc --refresh-results arabic_poc/validation/your-visual-lab.json`. This reuses the frame paths stored in the JSON and updates `entities.people`, `person_matches`, and the top-level `people` list only.
+
 ## Arabic-specialized ASR
 
 `--asr-model large-v3` uses generic Whisper with Arabic decoding. To use an Arabic-fine-tuned Whisper checkpoint, pass its Hugging Face repository ID or local directory path containing `/`. Choose a checkpoint you have evaluated on the client's audio; the shorthand “whisper-large-v3-ar” does not identify a unique model. Hugging Face ASR runs on CPU and preserves returned segment timestamps.

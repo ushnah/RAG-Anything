@@ -32,7 +32,10 @@ class WebChecks(unittest.TestCase):
         self.assertEqual(code, 200)
         data = json.loads(raw)
         self.assertEqual([d['id'] for d in data['datasets']], ['library', 'videos', 'visual', 'text', 'spoken', 'media'])
-        self.assertNotIn('"source":', raw.decode())
+        for dataset in data['datasets']:
+            for row in dataset['sources']:
+                self.assertNotIn('source', row)
+        self.assertNotIn(str(web.ROOT), raw.decode())
         self.assertNotIn('normalized_text', raw.decode())
         self.assertGreater(next(d for d in data['datasets'] if d['id']=='media')['count'], 0)
 

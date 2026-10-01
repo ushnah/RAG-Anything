@@ -85,3 +85,7 @@ models/
 *.webm
 *.jpg
 *.mp4
+*.jpg
+*.jpeg
+*.npz
+*.png

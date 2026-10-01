@@ -10,6 +10,8 @@ from pathlib import Path
 
 from .__main__ import VIDEO, AUDIO, IMAGES, normalize, save_json
 from .visual import embedding_model, rank
+from .remote import flatten_entities, normalize_entities
+from .person_aliases import resolve_people, retrieval_aliases
 
 ROOT = Path(__file__).resolve().parents[1]
 STORAGE = ROOT / 'rag_storage_arabic_video_search'
@@ -44,7 +46,7 @@ def collect():
                 continue
             seen.add(signature)
             evidence_id = hashlib.sha256(json.dumps(signature, ensure_ascii=False).encode()).hexdigest()[:24]
-            rows.append(dict(row, id=evidence_id, video_id=video_id, media_type=media_type,
+            rows.append(dict(row, person_entities=resolve_people(row.get('entities', {})), id=evidence_id, video_id=video_id, media_type=media_type,
                              evidence_type=kind, source_label=''))
             label = row.get('source_label') or row.get('metadata', {}).get('visual_label')
             label_signature = (video_id, 'metadata', label)
@@ -66,7 +68,8 @@ def group_matches(matches, top_k=3):
         # One card per file; retain the best three pieces of evidence.
         if len(groups[key]['matches']) < 3:
             groups[key]['matches'].append({k: row[k] for k in
-                ('id', 'anchor', 'original_text', 'evidence_type', 'similarity')})
+                ('id', 'anchor', 'original_text', 'evidence_type', 'similarity')} |
+                {'entities': row.get('entities', row.get('anchor', {}).get('entities', {}))})
     return list(groups.values())[:top_k]
 
 
@@ -107,13 +110,15 @@ def aligned_evidence(seed, rows, tolerance=2.0):
         gap = max(start-point, point-end, 0)
         if gap <= tolerance:
             result.append({k: other[k] for k in ('id', 'anchor', 'original_text', 'evidence_type')} |
-                          {'relation': 'overlap' if gap == 0 else 'nearby', 'gap_seconds': gap})
+                          {'relation': 'overlap' if gap == 0 else 'nearby', 'gap_seconds': gap,
+                           'entities': other.get('entities', other.get('anchor', {}).get('entities', {}))})
     return result
 
 
 def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_type='video'):
     query = set(tokens(question))
-    documents = [tokens(r['original_text']) for r in index['records']]
+    entity_names = {r['id']: normalize_entities(r.get('entities') or r.get('anchor', {}).get('entities')) for r in index['records']}
+    documents = [tokens(r['original_text'] + '\n' + flatten_entities(entity_names[r['id']]) + '\n' + retrieval_aliases(entity_names[r['id']])) for r in index['records']]
     n = len(documents)
     average = sum(map(len, documents))/max(n, 1)
     df = Counter(t for doc in documents for t in set(doc))
@@ -123,6 +128,12 @@ def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_t
     for row in ranked:
         doc = by_id[row['id']]
         counts = Counter(doc)
+        entity_match = bool(query) and any(query.issubset(set(tokens(name)))
+            for names in entity_names[row['id']].values() for name in names)
+        people = resolve_people(entity_names[row['id']])
+        alias_match = bool(query) and any(query == set(tokens(alias))
+            for person in people for alias in person['aliases'])
+        entity_match = entity_match or alias_match
         bm25 = 0.0
         for term in query:
             freq = counts[term]
@@ -133,15 +144,15 @@ def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_t
         # Named landmarks often share broad visual terms (for example, gate or
         # minaret). Reward precise Arabic term coverage so a complete name is
         # preferred over a semantically similar but differently named place.
-        score = (.60*max(0, row['similarity']) + .25*(bm25/(bm25+2)) + .15*coverage)
+        score = (.60*max(0, row['similarity']) + .25*(bm25/(bm25+2)) + .15*coverage + (.25 if entity_match else 0))
         # Fixed, explicit policy; not a calibrated probability. Strong lexical
         # matches may pass only with semantic support as well.
         semantic_floor = max(min_score, .7) if row['evidence_type'] == 'speech' and len(doc) < 5 and coverage == 0 else min_score
-        qualifies = (row['similarity'] >= semantic_floor or
+        qualifies = (entity_match or row['similarity'] >= semantic_floor or
                      (coverage >= .55 and row['similarity'] >= .45) or
                      (coverage == 1 and bool(query) and row['similarity'] >= .35))
         if qualifies:
-            row.update(hybrid_score=round(score, 4), bm25=round(bm25, 4), keyword_coverage=coverage)
+            row.update(hybrid_score=round(score, 4), bm25=round(bm25, 4), keyword_coverage=coverage, entity_match=entity_match, person_alias_match=alias_match, person_entities=people)
             accepted.append(row)
     accepted.sort(key=lambda r: r['hybrid_score'], reverse=True)
     groups = group_matches(accepted)
@@ -175,7 +186,7 @@ def main():
         rows = collect()
         if not rows:
             raise ValueError('No extracted video evidence found.')
-        vectors = encoder.encode([normalize(r['original_text']) for r in rows], batch_size=4,
+        vectors = encoder.encode([normalize(r['original_text'] + '\n' + flatten_entities(normalize_entities(r.get('entities')))) for r in rows], batch_size=4,
                                  return_dense=True)['dense_vecs']
         save_json(target, {'embedding_model': name, 'records': rows, 'vectors': vectors.tolist()})
         print(f'Indexed {len(rows)} evidence records from {len({r["video_id"] for r in rows})} sources.')
@@ -183,10 +194,12 @@ def main():
     index = json.loads(target.read_text())
     if name != index['embedding_model']:
         raise ValueError('Embedding model changed; rebuild unified video search.')
-    vector = encoder.encode([normalize(args.question)], return_dense=True)['dense_vecs'][0]
+    from .query_translation import query_variants, search_variants
+    variants = query_variants(args.question)
+    vectors = encoder.encode([normalize(q) for q in variants], return_dense=True)['dense_vecs']
     if not 0 <= args.min_score <= 1 or not math.isfinite(args.nearby_seconds) or args.nearby_seconds < 0:
         parser.error('min-score must be 0..1 and nearby-seconds finite and nonnegative')
-    print(json.dumps(hybrid_search(index, args.question, vector, args.min_score, args.nearby_seconds, args.media_type), ensure_ascii=False))
+    print(json.dumps(search_variants(index, variants, vectors, args.min_score, args.nearby_seconds, args.media_type), ensure_ascii=False))
 
 
 if __name__ == '__main__':
