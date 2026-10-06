@@ -1,0 +1,42 @@
+{
+  "abdul_rahman_al_sudais": {
+    "name_ar": "عبد الرحمن السديس",
+    "name_en": "Abdul Rahman Al-Sudais",
+    "aliases": [
+      "عبد الرحمن بن عبد العزيز السديس",
+      "عبدالرحمن السديس",
+      "عبدالرحمن بن عبدالعزيز السديس",
+      "السديس",
+      "Abdul Rahman bin Abdul Aziz Al-Sudais",
+      "Abdur Rahman Al Sudais",
+      "Abdurrahman Al-Sudais",
+      "Al Sudais",
+      "Sudais",
+      "Sheikh Sudais"
+    ]
+  },
+  "mohammed_bin_salman": {
+    "name_ar": "محمد بن سلمان",
+    "name_en": "Mohammed bin Salman",
+    "aliases": [
+      "محمد بن سلمان آل سعود",
+      "محمد بن سلمان بن عبد العزيز آل سعود",
+      "Muhammad bin Salman",
+      "Mohammad bin Salman",
+      "Mohammed bin Salman Al Saud",
+      "MBS",
+      "ابن سلمان"
+    ]
+  },
+  "abdulaziz_ibn_saud": {
+    "name_ar": "عبد العزيز بن سعود",
+    "name_en": "Abdulaziz Ibn Saud",
+    "aliases": [
+      "Ibn Saud",
+      "King Abdulaziz",
+      "الملك عبدالعزيز",
+      "الملك عبد العزيز",
+      "عبدالعزيز بن سعود"
+    ]
+  }
+}

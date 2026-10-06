@@ -1,0 +1,323 @@
+{
+  "label_status": "provisional, based on saved evidence; human review required",
+  "cases": [
+    {
+      "id": "01-ar",
+      "query": "عبد الرحمن بن عبد العزيز السديس",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "demo1.jpg"
+        },
+        {
+          "document": "images.jpeg"
+        }
+      ]
+    },
+    {
+      "id": "01-en",
+      "query": "Abdul Rahman Al-Sudais",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "demo1.jpg"
+        },
+        {
+          "document": "images.jpeg"
+        }
+      ]
+    },
+    {
+      "id": "02-ar",
+      "query": "أرني صورة للسديس",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "demo1.jpg"
+        }
+      ]
+    },
+    {
+      "id": "02-en",
+      "query": "Show me a photo of Al Sudais",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "demo1.jpg"
+        }
+      ]
+    },
+    {
+      "id": "03-ar",
+      "query": "أرني منشورا يذكر السديس",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "images.jpeg"
+        }
+      ]
+    },
+    {
+      "id": "03-en",
+      "query": "Show me a poster mentioning Al Sudais",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "images.jpeg"
+        }
+      ]
+    },
+    {
+      "id": "04-ar",
+      "query": "أرني القبة الخضراء",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "green_dome_madinah.jpg"
+        }
+      ]
+    },
+    {
+      "id": "04-en",
+      "query": "Show me the green dome",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "green_dome_madinah.jpg"
+        }
+      ]
+    },
+    {
+      "id": "05-ar",
+      "query": "أرني مآذن مضاءة ليلا",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "haram_minarets_makkah.jpg"
+        }
+      ]
+    },
+    {
+      "id": "05-en",
+      "query": "Show me illuminated minarets at night",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "haram_minarets_makkah.jpg"
+        }
+      ]
+    },
+    {
+      "id": "06-ar",
+      "query": "أرني علم باكستان",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "phonto-22.jpg"
+        }
+      ]
+    },
+    {
+      "id": "06-en",
+      "query": "Show me the Pakistan flag",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "phonto-22.jpg"
+        }
+      ]
+    },
+    {
+      "id": "07-ar",
+      "query": "أرني منشورا بنفسجيا",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "images.jpeg"
+        }
+      ]
+    },
+    {
+      "id": "07-en",
+      "query": "Show me a purple poster",
+      "media_type": "image",
+      "expected": [
+        {
+          "document": "images.jpeg"
+        }
+      ]
+    },
+    {
+      "id": "08-ar",
+      "query": "محمد بن سلمان",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "The Crown Prince Muhmmad Bin Salman  Arrived in Kabah ｜｜inside Kabah washing [Ar2cKrUliuc].webm",
+          "start": 120
+        }
+      ]
+    },
+    {
+      "id": "08-en",
+      "query": "Mohammed bin Salman",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "The Crown Prince Muhmmad Bin Salman  Arrived in Kabah ｜｜inside Kabah washing [Ar2cKrUliuc].webm",
+          "start": 120
+        }
+      ]
+    },
+    {
+      "id": "09-ar",
+      "query": "أرني الكعبة",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "The Crown Prince Muhmmad Bin Salman  Arrived in Kabah ｜｜inside Kabah washing [Ar2cKrUliuc].webm",
+          "start": 100,
+          "tolerance": 60
+        },
+        {
+          "document": "makkah.webm"
+        }
+      ]
+    },
+    {
+      "id": "09-en",
+      "query": "Show me the Kaaba",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "The Crown Prince Muhmmad Bin Salman  Arrived in Kabah ｜｜inside Kabah washing [Ar2cKrUliuc].webm",
+          "start": 100,
+          "tolerance": 60
+        },
+        {
+          "document": "makkah.webm"
+        }
+      ]
+    },
+    {
+      "id": "10-ar",
+      "query": "أرني قبة المسجد النبوي",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "madinah_dome.mp4",
+          "start": 0
+        }
+      ]
+    },
+    {
+      "id": "10-en",
+      "query": "Show me the dome of the Prophet mosque",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "madinah_dome.mp4",
+          "start": 0
+        }
+      ]
+    },
+    {
+      "id": "11-ar",
+      "query": "أرني مظلات المدينة",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "madinah_umbrellas.mp4",
+          "start": 0
+        }
+      ]
+    },
+    {
+      "id": "11-en",
+      "query": "Show me the umbrellas in Madinah",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "madinah_umbrellas.mp4",
+          "start": 0
+        }
+      ]
+    },
+    {
+      "id": "12-ar",
+      "query": "كيف أسجل في ويكي تعلم",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "wikilearn_arabic.webm"
+        }
+      ]
+    },
+    {
+      "id": "12-en",
+      "query": "How do I register on WikiLearn",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "wikilearn_arabic.webm"
+        }
+      ]
+    },
+    {
+      "id": "13-ar",
+      "query": "شرح مناسك الحج",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "hajj_guide.webm"
+        }
+      ]
+    },
+    {
+      "id": "13-en",
+      "query": "An explanation of Hajj rituals",
+      "media_type": "video",
+      "expected": [
+        {
+          "document": "hajj_guide.webm"
+        }
+      ]
+    },
+    {
+      "id": "14-ar",
+      "query": "أرني غواصة تحت الماء",
+      "media_type": "all",
+      "expected": []
+    },
+    {
+      "id": "14-en",
+      "query": "Show me a submarine underwater",
+      "media_type": "all",
+      "expected": []
+    },
+    {
+      "id": "15-ar",
+      "query": "أرني برج إيفل",
+      "media_type": "all",
+      "expected": []
+    },
+    {
+      "id": "15-en",
+      "query": "Show me the Eiffel Tower",
+      "media_type": "all",
+      "expected": []
+    },
+    {
+      "id": "16-ar",
+      "query": "أرني بطاريق على الجليد",
+      "media_type": "all",
+      "expected": []
+    },
+    {
+      "id": "16-en",
+      "query": "Show me penguins on ice",
+      "media_type": "all",
+      "expected": []
+    }
+  ]
+}

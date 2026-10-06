@@ -1,4 +1,5 @@
 """Lazy model adapters: no weights load until extraction is requested."""
+from .prompt_loader import get_prompt
 from pathlib import Path
 
 
@@ -23,21 +24,10 @@ class QwenParser:
 
     def parse_image(self, path, lang='ar', person_context=None):
         from PIL import Image
-        prompt = ('أجب بالعربية وبصيغة JSON فقط بهذا الشكل: '
-              '{"description":"المشهد: ... | العناصر والعدد المرئي: ... | النص المرئي: ... | الأشخاص/المعالم والأسماء: ... | الموضع/الألوان والتفاصيل المعمارية: ...", '
-              '"entities":{"people":[],"landmarks":[],"places":[],"organizations":[],"events":[]}}. '
-              'حافظ على وصف قصير وقابل للبحث ولا تتجاوز 110 كلمات. اذكر العدد فقط إذا كان الشيء كاملاً وواضحاً؛ وإلا اكتب «العدد غير محسوم». '
-              'اكتب «لا يوجد نص مقروء» إن لم يظهر نص. لا تحدد هوية شخص من وجهه أو مظهره. استخرج أسماء الأشخاص فقط من نص مقروء أو سياق مقدم مع توضيح المصدر. '
-              'استخرج أيضاً أسماء المؤسسات أو الأحداث من النص الظاهر أو السياق. '
-              'سمّ المبنى أو المعلم فقط إذا دعمته خصائص بصرية مميزة أو نص واضح. لا تخمن الكيانات أو الموقع أو الحركة. إذا لم تجد كيانات فأعد قوائم فارغة.' if self.describe else
-                  'انسخ النص كما يظهر في الصورة فقط، مع الحركات والأرقام وترتيب القراءة. '
-                  'لا تلخص ولا تصحح ولا تكمل النص من الذاكرة. اترك الأجزاء غير المقروءة دون تخمين.')
+        prompt = (get_prompt('vision.local_description') if self.describe else
+                  get_prompt('vision.local_ocr'))
         if self.describe and getattr(self, 'concise', False):
-                        prompt = ('Return JSON only in this exact shape: '
-                                            '{"description":"...", "entities":{"people":[],"landmarks":[],"places":[],"organizations":[],"events":[]}}. '
-                                            'Write two short English sentences, at most 75 words, describing the scene, unambiguous object counts, visible text, colours, layout, and architecture. '
-                                            'Do not identify people from faces or appearance. Extract names only from readable text or supplied context and state the source. '
-                                            'Say count uncertain when an object is cropped or unclear, and do not infer motion or location from a still image. Use empty lists when evidence is absent.')
+            prompt = get_prompt('vision.local_concise')
         if self.describe:
             from .remote import person_context_prompt
             prompt += person_context_prompt(person_context)

@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 DEFAULT_PEOPLE = {
+    'abdulaziz_ibn_saud': 'Ibn Saud portrait',
     'abdul_rahman_al_sudais': 'Abdul Rahman Al-Sudais',
     'saleh_al_fawzan': 'Saleh Al-Fawzan',
     'abdulaziz_ibn_baz': 'Abdul Aziz ibn Baz',

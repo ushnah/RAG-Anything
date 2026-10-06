@@ -89,3 +89,7 @@ models/
 *.jpeg
 *.npz
 *.png
+# Version the retrieval evaluation cases, not generated reports.
+!arabic_poc/validation/search_cases.json
+# Person alias registry is application configuration.
+!arabic_poc/person_aliases.json

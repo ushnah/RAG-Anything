@@ -160,3 +160,19 @@ Run `.venv311/bin/python -m arabic_poc.web` and open http://127.0.0.1:8765. See 
 ## Image and video scene search
 
 See [VISUAL_DEMO.md](VISUAL_DEMO.md) for the **Images & scenes** collection: Qwen visual descriptions, BGE-M3 retrieval, source labels, and video timestamp playback. This separate media-search path returns candidates without generating an answer. It is a description-based baseline, not direct pixel embedding or verified landmark recognition.
+
+## LLM prompt configuration
+
+Application prompts live in [`prompts.yaml`](prompts.yaml), grouped by key prefix:
+`vision.*`, `context.*`, `query.*`, `retrieval.*`, and `answers.*`.
+The code reads them with `get_prompt()` from `prompt_loader.py`. Dynamic questions,
+evidence, images and person data remain structured payloads in Python.
+
+Edit the YAML to change instructions; preserve JSON output schemas and the
+`${payload}` placeholder in person-context templates. YAML folded blocks (`>-`)
+join wrapped lines with spaces. The loader preserves literal JSON braces and
+substitutes only explicit template placeholders. Prompts are cached per process,
+so restart the app or notebook kernel after editing them. No reindexing is needed
+for query/answer changes; to apply description-prompt changes to existing media,
+rerun description extraction. Framework-managed LightRAG/RAG-Anything prompts
+remain managed by those frameworks.

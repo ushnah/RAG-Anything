@@ -57,7 +57,8 @@ def catalog(dataset):
 
 
 def public_record(row, dataset):
-    item = dict(row)
+    from .search_service import provenance
+    item = dict(row, person_evidence=provenance(row))
     item.pop('source', None)
     item.pop('normalized_text', None)
     item['source_key'] = __import__('hashlib').sha256(row['source'].encode()).hexdigest()[:24]
@@ -89,16 +90,16 @@ def run_question(job_id, dataset, question, media_type='all'):
         command = ([sys.executable, '-m', 'arabic_poc.visual', '--storage',
             DATASETS[dataset]['storage'], 'search', question, '--media-type', media_type]
             if dataset == 'visual' else [sys.executable, '-m', 'arabic_poc', '--storage',
-            DATASETS[dataset]['storage'], 'ask', question, '--top-k', '3'])
-        if dataset in ('videos', 'library'):
-            command = [sys.executable, '-m', 'arabic_poc.video_search', 'search', question, '--media-type', media_type if dataset == 'library' else 'video']
-        proc = subprocess.run(command,
-            cwd=ROOT, env=env, capture_output=True, text=True, timeout=480)
-        if proc.returncode:
-            # Avoid exposing configuration or a traceback through the browser.
-            print(proc.stderr[-4000:], file=sys.stderr, flush=True)
-            raise RuntimeError('The local RAG request failed. Check the configured model service and the server terminal.')
-        answer = json.loads(proc.stdout)
+            DATASETS[dataset]['storage'], 'ask', question, '--top-k', '5'])
+        if dataset in ('videos', 'library', 'visual'):
+            from .search_service import search
+            answer = search(question, ROOT / DATASETS[dataset]['storage'],
+                            'video' if dataset == 'videos' else media_type)
+        else:
+            proc = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True, timeout=480)
+            if proc.returncode:
+                raise RuntimeError('The local RAG request failed. Check the server terminal.')
+            answer = json.loads(proc.stdout)
         if dataset in ('library', 'videos', 'visual'):
             from .answers import answer_from_evidence
             answer = answer_from_evidence(question, answer, catalog(dataset))

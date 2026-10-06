@@ -109,7 +109,7 @@ def main():
     query = commands.add_parser('search')
     query.add_argument('question')
     query.add_argument('--media-type', choices=['all', 'image', 'video'], default='all')
-    query.add_argument('--top-k', type=int, default=3)
+    query.add_argument('--top-k', type=int, default=5)
     args = parser.parse_args()
     if args.action == 'build':
         import math

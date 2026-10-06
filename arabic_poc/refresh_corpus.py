@@ -2,6 +2,7 @@
 
 python -m arabic_poc.refresh_corpus rag_storage_arabic_remote_v2
 """
+from .prompt_loader import get_prompt
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
@@ -94,7 +95,7 @@ def main():
                                 local_vision = QwenParser('models/qwen2.5-vl-3b',describe=True)
                                 local_vision.concise = True
                             english = cached(digest+':local-qwen-en-v1:'+str(start),lambda:local_vision.parse_image(frame)[0]['text'])
-                            text = cached(digest+':local-qwen-en-ar-v3:'+str(start),lambda:chat([{'role':'system','content':'Translate the supplied image description into Arabic faithfully. Output only five concise, retrieval-friendly fields in this exact order: المشهد: ... | العناصر والعدد المرئي: ... | النص المرئي: ... | الموضع/الألوان: ... | تفاصيل معمارية: ... . Preserve a stated count only when it is explicit; otherwise use «العدد غير محسوم». Use «لا يوجد نص مقروء» when appropriate. Add no details.'},{'role':'user','content':english}]))
+                            text = cached(digest+':local-qwen-en-ar-v3:'+str(start),lambda:chat([{'role':'system','content':get_prompt('vision.translate_description')},{'role':'user','content':english}]))
                             engine = 'qwen-vl:generated:models/qwen2.5-vl-3b:translated:'+os.environ.get('REMOTE_TEXT_MODEL','gpt-oss')
                         else:
                             result = cached(key,lambda:vision.parse_image(frame)[0])

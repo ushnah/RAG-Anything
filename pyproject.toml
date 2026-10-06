@@ -21,6 +21,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
+    "PyYAML>=6.0",
     "huggingface_hub",
     "lightrag-hku<1.5",
     "mineru[core]>=3.4.1",
@@ -100,3 +101,6 @@ target-version = "py310"
 testpaths = ["tests"]
 python_files = ["test*.py"]
 norecursedirs = ["examples"]
+
+[tool.setuptools.package-data]
+arabic_poc = ["prompts.yaml"]

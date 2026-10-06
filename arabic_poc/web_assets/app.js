@@ -24,6 +24,13 @@ function renderEntities(container, row) {
   if (container.hidden) return;
   container.dir = 'rtl';
   container.append(el('div', 'entities-title', 'الكيانات'));
+  const evidenceLabels = { face_gallery_match: 'تطابق مع معرض الوجوه', visible_text_mention: 'اسم في النص المرئي', visual_model_mention: 'ذكر في وصف آلي', transcript_mention: 'ذكر في التفريغ الصوتي', publisher_mention: 'ذكر في بيانات المصدر', visible_text: 'نص مرئي' };
+  for (const person of row.person_evidence?.people || []) {
+    const origin = person.provenance || row.person_evidence.type;
+    const label = evidenceLabels[origin];
+    if (label) container.append(el('div', 'entity-label', `${person.name_ar}: ${label}`));
+  }
+
   if (!groups.length) container.append(el('span', 'entities-empty', 'لم تُستخرج كيانات مسماة'));
   for (const [label, names] of groups) {
     const group = el('div', 'entity-group');

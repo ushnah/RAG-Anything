@@ -11,7 +11,7 @@ from pathlib import Path
 from .__main__ import VIDEO, AUDIO, IMAGES, normalize, save_json
 from .visual import embedding_model, rank
 from .remote import flatten_entities, normalize_entities
-from .person_aliases import resolve_people, retrieval_aliases
+from .person_aliases import resolve_people, retrieval_aliases, person_ids_in_text
 
 ROOT = Path(__file__).resolve().parents[1]
 STORAGE = ROOT / 'rag_storage_arabic_video_search'
@@ -59,7 +59,7 @@ def collect():
     return rows
 
 
-def group_matches(matches, top_k=3):
+def group_matches(matches, top_k=5):
     groups = {}
     for row in matches:
         key = row['video_id']
@@ -115,8 +115,9 @@ def aligned_evidence(seed, rows, tolerance=2.0):
     return result
 
 
-def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_type='video'):
+def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_type='video', top_k=5):
     query = set(tokens(question))
+    query_people = person_ids_in_text(question)
     entity_names = {r['id']: normalize_entities(r.get('entities') or r.get('anchor', {}).get('entities')) for r in index['records']}
     documents = [tokens(r['original_text'] + '\n' + flatten_entities(entity_names[r['id']]) + '\n' + retrieval_aliases(entity_names[r['id']])) for r in index['records']]
     n = len(documents)
@@ -133,6 +134,8 @@ def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_t
         people = resolve_people(entity_names[row['id']])
         alias_match = bool(query) and any(query == set(tokens(alias))
             for person in people for alias in person['aliases'])
+        described_people = person_ids_in_text(row['original_text'])
+        alias_match = alias_match or bool(query_people & (described_people | {p['id'] for p in people}))
         entity_match = entity_match or alias_match
         bm25 = 0.0
         for term in query:
@@ -151,11 +154,11 @@ def hybrid_search(index, question, vector, min_score=.55, tolerance=2.0, media_t
         qualifies = (entity_match or row['similarity'] >= semantic_floor or
                      (coverage >= .55 and row['similarity'] >= .45) or
                      (coverage == 1 and bool(query) and row['similarity'] >= .35))
-        if qualifies:
-            row.update(hybrid_score=round(score, 4), bm25=round(bm25, 4), keyword_coverage=coverage, entity_match=entity_match, person_alias_match=alias_match, person_entities=people)
+        if qualifies or top_k > 5:
+            row.update(hybrid_score=round(score, 4), bm25=round(bm25, 4), keyword_coverage=coverage, entity_match=entity_match, person_alias_match=alias_match, person_entities=people, hybrid_qualified=qualifies)
             accepted.append(row)
     accepted.sort(key=lambda r: r['hybrid_score'], reverse=True)
-    groups = group_matches(accepted)
+    groups = group_matches(accepted, top_k=top_k)
     by_row = {r['id']: r for r in index['records']}
     for group in groups:
         for match in group['matches']:
