@@ -1,6 +1,5 @@
 """Reference-gallery face identification for sampled media frames."""
 import hashlib
-import json
 import logging
 from pathlib import Path
 

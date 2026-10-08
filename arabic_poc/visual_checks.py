@@ -15,19 +15,18 @@ class VisualChecks(unittest.TestCase):
         self.assertEqual(rank({'records': [], 'vectors': []}, [1, 0], 'all', 3), [])
 
     def test_visual_job_uses_search_and_video_filter(self):
-        import json
-        from types import SimpleNamespace
         from unittest.mock import patch
         from . import web
         web.JOBS['visual-test'] = {'status': 'running'}
         web.BUSY.acquire()
-        response = SimpleNamespace(returncode=0, stdout=json.dumps({'answer': 'Candidates', 'sources': [], 'retrieval': 'visual_candidates'}))
-        with patch.object(web.subprocess, 'run', return_value=response) as run:
+        response = {'answer': 'Candidates', 'sources': [], 'no_match': True}
+        with patch('arabic_poc.search_service.search', return_value=response) as search, \
+                patch.object(web, 'catalog', return_value=[]), \
+                patch.object(web.subprocess, 'run') as run:
             web.run_question('visual-test', 'visual', 'show gate video', 'video')
-        args = run.call_args.args[0]
-        self.assertIn('arabic_poc.visual', args)
-        self.assertIn('search', args)
-        self.assertEqual(args[-2:], ['--media-type', 'video'])
+        search.assert_called_once_with('show gate video',
+                                      web.ROOT / web.DATASETS['visual']['storage'], 'video')
+        run.assert_not_called()
         self.assertEqual(web.JOBS.pop('visual-test')['status'], 'done')
         self.assertFalse(web.BUSY.locked())
 

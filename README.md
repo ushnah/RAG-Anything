@@ -1,3 +1,22 @@
+# Arabic multimedia search app
+
+This repository contains our Arabic/English search demo in [`arabic_poc/`](arabic_poc/README.md), built alongside the upstream RAG-Anything framework. The app searches image descriptions, video moments, speech, OCR and publisher metadata, with bilingual person aliases and optional reference-face matching.
+
+```sh
+# Run from the repository root with the configured .env and existing index
+.venv/bin/python -m arabic_poc.web
+```
+
+Open http://127.0.0.1:8765. See the [application README](arabic_poc/README.md) for installation, model configuration, indexing/description commands, storage layout and tests. The [web walkthrough](arabic_poc/WEB_DEMO.md) describes the current UI. The [code review and cleanup proposal](docs/CODE_REVIEW.md) records findings and deletion candidates.
+
+The active app uses hybrid retrieval, up to 20 candidate sources and LLM reranking to a maximum of **5 source cards**. The embedding model stays loaded in the web process. The graph-based CLI is a separate retrieval path; image/video description updates do not rebuild its graph.
+
+## Upstream framework documentation
+
+The original RAG-Anything documentation follows. Its framework examples and defaults are distinct from the application setup linked above.
+
+---
+
 <div align="center">
 
 <div style="margin: 20px 0;">

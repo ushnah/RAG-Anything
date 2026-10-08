@@ -1,72 +1,38 @@
 # Local web demo
 
-From the repository root:
+From the repository root, run:
 
 ```sh
-.venv311/bin/python -m arabic_poc.web
+.venv/bin/python -m arabic_poc.web
 ```
 
-Open **http://127.0.0.1:8765**. Keep this terminal and your Ollama server running. Stop the web server with Ctrl+C. For another port, add `--port 8766`.
+Open **http://127.0.0.1:8765**. Add `--port 8766` for another port. The server binds to localhost and uses the configured model endpoints in `.env`. A local Ollama/Qwen server is needed only when that backend is selected.
 
-The UI uses `rag_storage_arabic_demo`, `rag_storage_arabic_media_final`, and `rag_storage_arabic_spoken`. The new **Spoken Arabic** collection contains a tutorial lecture and a Syrian-Arabic speaker; see [SPOKEN_VIDEOS.md](SPOKEN_VIDEOS.md). It reads each index's tokenizer/embedding settings automatically and uses the Qwen configuration in `.env`. No additional web dependencies are required.
+## Walkthrough
 
-## Suggested team-lead walkthrough
+1. Explore the Library; filter by images, videos, audio or documents.
+2. Search `أرني صور الملك فيصل` or `Show me photos of King Faisal`.
+3. Inspect descriptions, entities and person provenance below the media.
+4. Search `أرني فيديو الملك فيصل في بريطانيا` with the video filter.
+5. Use matching-moment buttons or answer citations to seek to a timestamp. “About this item” is file-level publisher metadata, not a scene timestamp.
+6. Compare `أرني القبة الخضراء` and `Show me the green dome` to demonstrate query expansion.
 
-1. Choose **Arabic library**, select the manuscript-cataloguing question, and click **Ask a question**.
-2. Expand the answer's citations and compare them with the original extracted text.
-3. Choose **Audio & video**. Inspect a narration segment and play it from its timestamp.
-4. Ask one of the suggested media questions. Show the retrieved evidence and distinguish a verified quote substring from a faithful answer.
-5. If live generation is slow, open a **Recorded media example**. The UI labels saved results and their known quality failures explicitly.
+The UI requests the `library` dataset. Other historical dataset IDs remain in the API for compatibility. `arabic_poc/active_indexes.json` selects local storage; this workspace uses `rag_storage_arabic_remote_v2`. The top-level Library count reflects unique Library files, not the sum of overlapping API collections.
 
-Live generation can take several minutes. The UI handles one live question at a time to avoid loading competing model processes. Reloading the page does not cancel a running query; wait for it to finish before sending another.
+Search retrieves up to 20 candidate files and reranks to at most 5 source cards. The web process caches BGE-M3 and serializes questions. Reloading the browser does not cancel a running request. No upload/ingestion screen is implemented.
 
-## Scope
+New catalog content appears after a page refresh. Restart the server after changing aliases, prompts, backend/model configuration or the active-index mapping. See [README.md](README.md) for description/indexing commands.
 
-- Runs only on this Mac; it binds to `127.0.0.1`.
-- No public hosting or credentials in browser code.
-- Questions, saved results, original passages, citations, and source playback.
-- No upload or ingestion screen: add/index new files through the existing CLI before the demo.
-- Current model failures are unchanged: mixed-language answers, unsupported claims, OCR/ASR errors, and incomplete graph extraction remain possible.
-- Five HTTP tests passed for collection access, byte-range playback, rejected file/path/origin requests, saved-result labeling, and serialized jobs. JavaScript syntax and Python compilation were checked. Browser visual testing was not performed.
+## What the evidence means
+
+Descriptions are generated interpretations; OCR and transcripts are extracted text. Face-gallery matches are separate from names on posters and publisher labels. A video label does not establish that a person appears in every frame. Frames are sampled and may miss short events. King Faisal's newly added videos have scene descriptions, not newly generated transcripts.
+
+Answers validate citation IDs and exact quote substrings. That check does not guarantee factual correctness or semantic support for every claim. When generation fails, the app retains retrieved sources for inspection.
+
+## HTTP checks
 
 ```sh
-.venv311/bin/python -m unittest arabic_poc.web_checks -v
+.venv/bin/python -m unittest arabic_poc.web_checks arabic_poc.visual_checks -v
 ```
 
-## Live verification
-
-A real question was submitted through `/api/ask` and polled through `/api/jobs/...`. It completed in 36.4 seconds, identified مريم, and returned the exact quote `تشرف مريم على فهرسة المخطوطات` with the correct source. This verifies the web backend → existing CLI → local Qwen → citation response path; it does not establish general answer quality.
-
-## Visual media search
-
-The Images & scenes collection adds generated image/frame descriptions and source labels, with image/video filters. See [VISUAL_DEMO.md](VISUAL_DEMO.md) for setup, attribution, example queries, and limits.
-
-## Answers from retrieved evidence
-
-Library, video and visual searches now pass their retrieved passages to the configured text model (currently remote GPT-OSS 120B). The original hybrid retrieval stays unchanged. Answers include exact-quote citations; citations for nested matches link to their parent media card and seek to the evidence timestamp. Visual-description citations are explicitly labelled as generated descriptions.
-
-No-match searches skip generation. Insufficient evidence, invalid citations or provider failures retain the source cards without presenting an unvalidated answer. Exact quotation checks do not verify every claim's semantic support.
-
-## Expanded demo corpus
-
-`data/demo_additions` now includes openly licensed Wikimedia media with full sidecar attribution:
-
-- `wikilearn_arabic.webm`: a CC0 Arabic WikiLearn registration tutorial, useful for Arabic speech, UI text, QR code, browser and screen-search demonstrations.
-- `hajj_guide.webm`: a CC BY 3.0 Hajj explainer, useful for Mecca/Hajj, visible text and religious-domain retrieval demonstrations.
-
-New visual extraction uses a compact four-part Arabic description: `المشهد` (scene), `العناصر` (objects), `النص المرئي` (visible text), and `الموضع/الألوان` (layout and colours). It avoids face identity, inferred action and guessed location. Descriptions remain generated evidence and must be checked against the cited frame.
-
-## Landmark and architectural evidence
-
-The expanded sample collection includes a CC0 Green Dome image from Madinah and a public-domain image of illuminated minarets at King Fahd Gate in Makkah. New descriptions record five fields: scene, visible objects and count, visible text, placement/colours, and architectural details.
-
-Counts are only returned when the supporting visual description explicitly states a number or an unambiguous Arabic dual form. The answer generator otherwise says that the count is uncertain. For example, the existing King Abdul Aziz Gate image contains the visual evidence `مئذنتان طويلتان`; the query `كم عدد مآذن بوابة الملك عبد العزيز؟` retrieves the gate label, adds the linked visual description, and answers two minarets with that exact cited phrase.
-
-Useful client questions:
-
-- `كم عدد مآذن بوابة الملك عبد العزيز؟`
-- `أرني صورة لمآذن مضاءة في مكة`
-- `ما لون القبة الظاهرة في صورة المدينة؟`
-- `أرني صورة للقبة الخضراء في المدينة`
-
-These descriptions do not identify people from their faces. Named-person retrieval should use source metadata, visible text, captions, or transcript mentions.
+The web tests need the local demo files and localhost socket permission. They check catalog access, private-path rejection, byte-range playback, origin/host checks and serialized jobs. Retrieval routing is mocked and should not download a model.

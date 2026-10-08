@@ -103,4 +103,4 @@ python_files = ["test*.py"]
 norecursedirs = ["examples"]
 
 [tool.setuptools.package-data]
-arabic_poc = ["prompts.yaml"]
+arabic_poc = ["prompts.yaml", "person_aliases.json", "web_assets/*", "demo/*.txt", "validation/search_cases.json"]

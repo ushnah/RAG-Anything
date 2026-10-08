@@ -19,6 +19,9 @@ class PipelineIsolationChecks(unittest.TestCase):
         environment = patch.dict('os.environ', {}, clear=True)
         environment.start()
         self.addCleanup(environment.stop)
+        dotenv = patch('arabic_poc.remote.load_dotenv')
+        dotenv.start()
+        self.addCleanup(dotenv.stop)
         self.extractor = pipeline.Extractor(describe_images=True, frame_seconds=10)
         self.visual = {
             'text': 'A doorway with a sign.',

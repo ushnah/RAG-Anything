@@ -1,96 +1,140 @@
-# Arabic RAG CLI
+# Arabic and English multimedia search
 
-Default extraction policy: PaddleOCR Arabic for every PDF page, image, and sampled video frame; Whisper (Arabic, `small` by default) for audio and video speech; BGE-M3 dense embeddings; RAG-Anything/LightRAG graph + vector retrieval; Qwen through an OpenAI-compatible endpoint. Includes offline extraction and retrieval evaluation.
+A local web app for searching images, video moments, speech, OCR and document text. It adds bilingual person aliases, Arabic query expansion, optional reference-face matches, generated descriptions and grounded answers to the RAG-Anything workspace.
+
+## Start the app
+
+Run from the repository root:
+
+```sh
+.venv/bin/python -m arabic_poc.web
+```
+
+Open **http://127.0.0.1:8765**. Use `--port 8766` for another port. The UI has one Library with image, video, audio and document filters. It serves existing indexed files; ingestion runs separately through the CLI. See [WEB_DEMO.md](WEB_DEMO.md).
 
 ## Setup
 
-Use the existing Python 3.11 environment:
+Python 3.10+ is declared by this project; available wheels for optional OCR/face backends depend on the Python version and platform. Use the existing `.venv` when working in this checkout.
 
 ```sh
-.venv311/bin/python -m pip install -e .
-.venv311/bin/python -m pip install -r arabic_poc/requirements.txt
-# macOS, needed for audio/video:
+# For a new checkout/environment only
+python3 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/python -m pip install -r arabic_poc/requirements.txt
+# Optional face enrichment
+.venv/bin/python -m pip install -e '.[face]'
+# macOS media tools
 brew install ffmpeg
 ```
 
-Add the settings in `arabic_poc/env.example` to your existing `.env`. Start your Qwen server or configure a hosted Qwen endpoint. Local extraction and embeddings may download model weights on first use. Speech runs on CPU for Mac compatibility.
+Merge the required settings from [`env.example`](env.example) into your root `.env`; do not overwrite an existing configuration. Remote text/vision/ASR and local OCR can be selected independently. Embeddings remain local with `BGE_MODEL=BAAI/bge-m3` by default. Local models may download weights on first use.
 
-## Run
+| Setting | Purpose |
+| --- | --- |
+| `MODEL_BACKEND` | Default backend, `local` or `remote` |
+| `TEXT_BACKEND`, `VISION_BACKEND`, `ASR_BACKEND`, `OCR_BACKEND` | Per-role overrides |
+| `REMOTE_BASE_URL`, `REMOTE_API_KEY` | OpenAI-compatible gateway configuration |
+| `REMOTE_TEXT_MODEL` | Query rewriting, translation, reranking and answer model |
+| `REMOTE_VISION_MODEL` | Image/frame description model; remote OCR when selected |
+| `REMOTE_ASR_MODEL` | Remote transcription model |
+| `REMOTE_MAX_TOKENS`, `REMOTE_TIMEOUT` | Remote response limit and per-request timeout |
+| `BGE_MODEL` | BGE-M3 model ID or compatible local model directory |
+| `QWEN_BASE_URL`, `QWEN_MODEL`, `QWEN_API_KEY` | Local text-generation endpoint |
+| `FACE_GALLERY_PATH` | Enables optional reference-gallery face enrichment |
 
-```sh
-# Extraction only: no Qwen or embedding model required
-.venv311/bin/python -m arabic_poc extract data/
+The recent demo used `cerebras/gpt-oss-120b` for text and `groq/qwen/qwen3.6-27b` for vision. These are configuration values, not a required or hardcoded pairing. The reranker uses the configured text LLM, not a dedicated cross-encoder.
 
-# Extract/cache and index (or reuse cached extraction)
-.venv311/bin/python -m arabic_poc ingest data/
+## How search works
 
-.venv311/bin/python -m arabic_poc ask 'ما الذي تذكره المصادر عن هذا الموضوع؟'
+1. Preserve the original query. Resolve known Arabic/English aliases from [`person_aliases.json`](person_aliases.json); the text LLM can propose additional name-span resolutions against a bounded canonical-person shortlist. Ambiguous known aliases remain unresolved.
+2. Add canonical-name variants and, for English queries, an Arabic translation when the remote text backend is enabled. Provider failures retain the original query and deterministic alias variants.
+3. Embed query variants with BGE-M3. Combine dense similarity, BM25-style token scoring, entity matches and person aliases, then group evidence by source file.
+4. Retrieve up to 20 candidate files and rerank with the text LLM. Show at most **5 files**, with up to **3 matching passages/moments per file**. A failed/unavailable reranker falls back to qualified hybrid results.
+5. Generate an answer from up to 24 selected evidence passages. Validate quoted substrings and citation IDs; retain source cards if generation fails.
 
-# Select one consistent ASR model and sampling interval for a corpus
-.venv311/bin/python -m arabic_poc --storage rag_storage_arabic_large ingest data/ --asr-model large-v3 --frame-seconds 15
-```
+`search_service.py` keeps the embedding model loaded once per web process. Queries are serialized. Index JSON is read at query time; catalogs refresh on page reload. Restart the app after changing prompts, aliases, backend/model settings or the active-index configuration.
 
-Default storage is `rag_storage_arabic/`, separate from your existing experiment. `sources/*.json` contains original extraction, normalized retrieval text, source path, stable passage ID, extraction engine, and page or time anchor. `index/` contains the LightRAG stores. Repeat ingestion uses stable document IDs; extraction is cached. If a source or extraction settings change, use a new storage directory to avoid stale graph evidence. Run one ingestion process at a time per storage directory.
+Generated descriptions, OCR/visible text, transcript mentions, publisher labels and face-gallery matches have distinct provenance. A publisher label describes the whole file and does not prove a person is visible at every timestamp. Face matches and descriptions are fallible. Exact quotation validation does not establish that every answer claim follows from the evidence.
 
-Optional metadata: create `book.pdf.metadata.json` beside `book.pdf`, for example:
+## Storage and entry points
 
-```json
-{"title": "عنوان الكتاب", "author": "المؤلف", "volume": "1", "chapter": "الباب الأول"}
-```
+[`active_indexes.json`](active_indexes.json) is local runtime configuration and is intentionally not committed. In this workspace it points to `rag_storage_arabic_remote_v2`. Without it, older collection defaults in `video_search.py` and `web.py` apply.
 
-Pages are one-based physical PDF pages, not printed page labels. Speech anchors contain start/end seconds. Frame anchors indicate the sampling grid (approximate visual timestamps); frames are sampled every 30 seconds by default. PDFs preserve recognized text. Images optionally include separately labeled generated visual descriptions. Tables follow OCR reading order. Confidence is null because the existing parser discards confidence scores. Metadata is document-level; chapters are not inferred.
+| Location | Contents |
+| --- | --- |
+| `data/` | Sample media and adjacent `*.metadata.json` attribution |
+| `reference_faces/<canonical_id>/` | Reference photos and `sources.json`; keep separate from sample photos |
+| `<storage>/sources/*.json` | Extracted passages, entities, source paths and anchors |
+| `<storage>/index.json` | Combined library records and parallel dense vectors |
+| `<storage>/visual-index.json` | Visual description records and vectors |
+| `<storage>/index/` | Separate LightRAG graph/vector stores |
+| `<storage>/image-additions-backup-*` | Image-index rollback snapshots |
+| `<storage>/video-refresh-*/` | Resumable frame results and pre-publish backups |
+| `reference_faces/.face_gallery.npz` | Rebuildable reference-face embedding cache |
 
-## Answers and fidelity
+This is a local JSON-backed POC, not a hosted vector database. Searches load and score the index in memory. Moving to a database/object store is future work. Keep one index writer running per storage directory; the individual JSON writes are atomic, but publishing several index files is not a single transaction.
 
-Retrieval uses normalized Arabic; generation receives original extracted passages. Output includes the Arabic answer, citations with passage IDs and verbatim quotes, and retrieved source records with anchors. Invalid/missing quotations suppress the generated answer. This validates quote substrings, not whether every claim follows from the evidence. OCR/ASR output is not a canonical Quran/Hadith edition: inspect the linked page or recording before treating it as an exact religious quotation. No canonical-text verification is implemented.
+| Module | Responsibility |
+| --- | --- |
+| `web.py`, `web_assets/` | Local HTTP API and UI |
+| `search_service.py`, `video_search.py` | Cached encoder, hybrid retrieval, grouping and reranking |
+| `query_rewriting.py`, `query_translation.py`, `person_aliases.py` | Query expansion and canonical names |
+| `remote.py`, `models.py`, `face_identifier.py` | Remote/local model adapters and gallery enrichment |
+| `__main__.py` | Extraction, source records and graph CLI |
+| `index_images.py`, `index_videos.py` | Incremental description updates for the app |
+| `refresh_corpus.py`, `refresh_indexes.py` | Full-corpus refresh and graph/index activation |
+| `answers.py`, `prompt_loader.py`, `prompts.yaml` | Grounded answers and application prompts |
+| `evaluate*.py`, `*checks.py` | Evaluation and regression checks |
 
-Video includes speech and sampled on-screen text; enable `--describe-images` to also describe visible content. Silent videos are supported. Brief on-screen text between samples may be missed.
+## Add or refresh image descriptions
 
-## Lightweight checks
-
-```sh
-.venv311/bin/python -m unittest arabic_poc.checks -v
-```
-
-
-## Qwen OCR and visual understanding
-
-Use your existing local Qwen2.5-VL model for difficult scans. This is the generic Qwen checkpoint, not an Arabic-fine-tuned model unless you supply one explicitly.
-
-```sh
-.venv311/bin/python -m arabic_poc --storage rag_storage_qwen ingest data/ --ocr-engine qwen --qwen-vl-model models/qwen2.5-vl-3b --describe-images
-```
-
-`--describe-images` adds Arabic visual descriptions for standalone images and sampled video frames (not PDF figures). They are labeled `qwen-vl:generated` and `kind=visual_description`; these are model interpretations, not transcriptions. They must not be treated as exact source quotations. OCR and descriptions can load separate model instances; leave descriptions off on memory-constrained machines. Qwen uses CUDA, MPS, or CPU automatically. Pages reaching the output limit fail rather than silently indexing truncated output.
-
-### Reference face identification
-
-Face identification is a separate optional enrichment step. It runs on the same sampled video frames already sent to OCR and the visual model; it does not replace the remote VLM or ask it to identify faces. Install the optional backend with:
-
-```sh
-pip install -e '.[face]'
-```
-
-Create a gallery whose directory names are the canonical identifiers:
-
-```text
-reference_faces/
-├── sheikh_x/
-│   ├── 001.jpg
-│   └── 002.jpg
-└── sheikh_y/
-	└── 001.jpg
-```
-
-To seed the initial Saudi scholars and leaders from Wikimedia Commons, run this from the repository root when internet access is available:
+These commands update the **existing active app indexes**; they require its `index.json` and `visual-index.json`. They do not update the LightRAG graph.
 
 ```sh
-python scripts/download_reference_faces.py --gallery reference_faces --limit 3
+# New images in this directory only
+.venv/bin/python -m arabic_poc.index_images data/demo_additions/king_faisal_images
+
+# Regenerate descriptions/entities for all images in the selected directory
+.venv/bin/python -m arabic_poc.index_images data/demo_additions/king_faisal_images --refresh
 ```
 
-The downloader writes `sources.json` inside each person directory with the Commons page, image URL, artist, and reported license. Add or override a person with `--person folder_name=Search Name`. Review the downloaded candidates before using them; the face gallery loader will skip images with no face or multiple faces.
+The image command excludes paths containing `visual_samples`. Other generic ingestion commands do not share this exclusion: pass specific sample paths, not the whole `data/` tree. Reference-gallery photos must never double as sample content.
 
-Configure it in `.env`:
+## Add or refresh video scene descriptions
+
+```sh
+.venv/bin/python -m arabic_poc.index_videos --frame-seconds 10 \
+  data/demo_additions/king_faisal/king_faisal_1967.mp4 \
+  data/demo_additions/king_faisal/king_faisal_royal_welcome_1967.mp4
+
+# Explicitly refresh every indexed video
+.venv/bin/python -m arabic_poc.index_videos --refresh-library --frame-seconds 10
+```
+
+Use `--resume <printed-run-directory>` with the same video paths and sampling interval after an interruption. This command generates **scene descriptions only**: it preserves previously indexed speech/OCR but does not transcribe newly added videos. Sampling can miss brief appearances; a frame timestamp is a point, not proof covering the next ten seconds. The King Faisal videos were added with scene descriptions, without newly generated transcripts.
+
+## New corpus, OCR, transcription and graph CLI
+
+For a fresh corpus, use a new storage directory and explicit input paths:
+
+```sh
+# Extraction only: local/remote OCR, ASR and optional descriptions
+.venv/bin/python -m arabic_poc --storage rag_storage_new extract path/to/media --describe-images
+
+# Extraction plus LightRAG graph ingestion
+.venv/bin/python -m arabic_poc --storage rag_storage_new ingest path/to/media --describe-images
+
+# Graph-based question answering (different from the app's hybrid search)
+.venv/bin/python -m arabic_poc --storage rag_storage_new ask 'ما الذي يظهر في المصادر؟' --top-k 5
+```
+
+`--ocr-engine qwen --qwen-vl-model models/qwen2.5-vl-3b` selects local Qwen OCR; PaddleOCR Arabic is the local default. `--asr-model small` is the default local Whisper option; `--asr-model large-v3` is another generic Whisper checkpoint. Pass a repository ID/path for a compatible custom ASR checkpoint. Do not change embedding models on an existing index without rebuilding.
+
+For the full refresh/activation workflow, consult [REFRESH.md](REFRESH.md) and `python -m arabic_poc.refresh_indexes --help`. That older workflow is distinct from the incremental description commands above; review its cache and face-enrichment limitations in [the code review](../docs/CODE_REVIEW.md).
+
+## People and prompts
+
+Put clear, single-person reference photos under `reference_faces/<canonical_id>/`, and store their source attribution in `sources.json`. Configure:
 
 ```env
 FACE_GALLERY_PATH=reference_faces
@@ -100,79 +144,34 @@ MIN_FACE_SIZE=40
 MIN_DETECTION_SCORE=0.6
 ```
 
-InsightFace/ArcFace generates and caches one normalized embedding per valid reference image. Images with no face or multiple faces are skipped. Each sampled frame receives a separate `person_matches` field such as `{"name":"sheikh_x","similarity":0.83,"source":"face_recognition"}`; unknown faces use `"name": null`. Known names are appended to the searchable normalized text, while OCR text, VLM entities, timestamps, source paths, and document metadata remain unchanged. The threshold is a starting configuration, not a universal value; calibrate it with held-out images from the intended camera, pose, and lighting conditions.
+Add the same canonical ID to `person_aliases.json`, with `name_ar`, `name_en` and `aliases`. Avoid generic ambiguous given names. InsightFace skips unsuitable reference photos and caches valid embeddings; rebuild descriptions with `--refresh` after changing the gallery. Inspect source rights and model licensing for your deployment.
 
-This identifies only people represented in the local gallery and should not be treated as ground truth without review. InsightFace model-pack licensing and any gallery image permissions must be checked for the deployment; the package and pretrained model assets may have separate licensing terms.
+All application LLM instructions live in [`prompts.yaml`](prompts.yaml): `vision.*`, `context.*`, `query.*`, `retrieval.*`, and `answers.*`. Preserve their output schemas and `${payload}` placeholders. Framework prompts remain in RAG-Anything/LightRAG. Query/answer prompt edits need an app restart; description-prompt edits require regenerated descriptions to affect existing media.
 
-For a single image, run `./.venv/bin/python -m arabic_poc.sheikh_poc path/to/frame.jpg`. The interactive walkthrough is `arabic_poc/sheikh_poc.ipynb`; it prints the name-only `{"people": [...]}` result and the enriched visual description separately.
-
-To update face entities in an already-saved visual-lab result after changing the reference gallery, without regenerating descriptions, run `./.venv/bin/python -m arabic_poc.sheikh_poc --refresh-results arabic_poc/validation/your-visual-lab.json`. This reuses the frame paths stored in the JSON and updates `entities.people`, `person_matches`, and the top-level `people` list only.
-
-## Arabic-specialized ASR
-
-`--asr-model large-v3` uses generic Whisper with Arabic decoding. To use an Arabic-fine-tuned Whisper checkpoint, pass its Hugging Face repository ID or local directory path containing `/`. Choose a checkpoint you have evaluated on the client's audio; the shorthand “whisper-large-v3-ar” does not identify a unique model. Hugging Face ASR runs on CPU and preserves returned segment timestamps.
-
-## Demo and prerequisite check
+## Tests and evaluation
 
 ```sh
-.venv311/bin/python -m arabic_poc.doctor
-.venv311/bin/python -m arabic_poc ingest arabic_poc/demo/
-.venv311/bin/python -m arabic_poc ask 'من يشرف على فهرسة المخطوطات؟'
+.venv/bin/python -m pip install pytest pytest-asyncio
+.venv/bin/python -m unittest discover -s arabic_poc -t . -p '*checks.py'
+PYTHON_DOTENV_DISABLED=1 .venv/bin/python -m pytest tests -q
 ```
 
-The demo text is explicitly fictional. Configure generation using `env.example`; `BGE_MODEL` can point to a locally downloaded BGE-M3 directory. Extraction runs locally. Indexing sends extracted text to the configured generation endpoint for graph construction; answering sends retrieved source passages there too.
-
-Passages retain exact original substrings, character offsets, and overlapping windows of at most 1,800 characters. This bounds per-source context while retaining page/media anchors. The extraction cache schema changed: use a new storage directory for caches created by earlier versions.
-
-## Evaluation
-
-Create UTF-8 JSONL with manually verified references. For extraction, use one line per page/segment:
-
-```json
-{"id":"page-1","reference":"نص عربي","hypothesis":"نص عربى"}
-```
-
-For retrieval, copy ordered passage IDs from the query's `sources` output and compare with manually labeled relevant passage IDs:
-
-```json
-{"id":"question-1","expected_ids":["passage-a"],"retrieved_ids":["passage-b","passage-a"]}
-```
+The framework command disables automatic `.env` loading so local model/parser overrides do not change tests of default settings. The web checks currently need the local demo corpus and permission to bind localhost; most other checks mock model calls. See [the review](../docs/CODE_REVIEW.md) for known test limitations.
 
 ```sh
-.venv311/bin/python -m arabic_poc.evaluate evaluation.jsonl
+# Calls configured models; compares the same candidate pool with/without reranking
+.venv/bin/python -m arabic_poc.evaluate_search --limit 4
+# Full provisional Arabic/English set
+.venv/bin/python -m arabic_poc.evaluate_search
 ```
 
-Reports per-case and macro-averaged CER/WER (raw and normalized), Recall@5/10, MRR, and Hit@10. Run extraction in separate storage directories for PaddleOCR and Qwen to compare identical inputs. This is an offline scorer, not an automatic corpus/question generator. Faithfulness and canonical religious-text verification still require human review. Kraken, MMORE, and production concurrency are outside this first implementation.
+[`validation/search_cases.json`](validation/search_cases.json) contains provisional expected files and timestamps that require human review. This evaluator deliberately measures **Recall@3**, reciprocal rank, timestamp recall and negative-query correctness; the app displays up to **5** sources. `evaluate.py` separately scores supplied extraction/retrieval JSONL (CER/WER and retrieval metrics).
 
-Model API references: [BGE-M3](https://github.com/FlagOpen/FlagEmbedding/blob/master/research/BGE_M3/README.md), [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct).
+Useful demo queries:
 
-If the default LightRAG tokenizer download is unavailable, set `RAG_TOKENIZER_MODEL=models/qwen2.5-vl-3b` in `.env` to use the existing local Qwen tokenizer. Keep tokenizer and embedding settings consistent throughout the lifetime of an index. Token counts from this tokenizer approximate generation budgets when the generation model differs.
+- `أرني صور الملك فيصل` / `Show me photos of King Faisal`
+- `أرني فيديو الملك فيصل في بريطانيا`
+- `أرني القبة الخضراء` / `Show me the green dome`
+- `أرني صور عبد الرحمن بن عبد العزيز السديس`
 
-### Integration design
-
-The Arabic adapters convert each modality into source-anchored text before calling RAG-Anything's `insert_content_list`. LightRAG builds and queries the graph and dense vector stores in `mix` mode. This first POC does not enable RAG-Anything's native multimodal processors or BGE-M3 sparse vectors. Visual descriptions are indexed alongside OCR and ASR records through the same source-preserving path. Final generation requests JSON and gets one repair attempt if exact citation validation fails.
-
-
-## Local demo web UI
-
-Run `.venv311/bin/python -m arabic_poc.web` and open http://127.0.0.1:8765. See [WEB_DEMO.md](WEB_DEMO.md) for the team-demo walkthrough.
-
-## Image and video scene search
-
-See [VISUAL_DEMO.md](VISUAL_DEMO.md) for the **Images & scenes** collection: Qwen visual descriptions, BGE-M3 retrieval, source labels, and video timestamp playback. This separate media-search path returns candidates without generating an answer. It is a description-based baseline, not direct pixel embedding or verified landmark recognition.
-
-## LLM prompt configuration
-
-Application prompts live in [`prompts.yaml`](prompts.yaml), grouped by key prefix:
-`vision.*`, `context.*`, `query.*`, `retrieval.*`, and `answers.*`.
-The code reads them with `get_prompt()` from `prompt_loader.py`. Dynamic questions,
-evidence, images and person data remain structured payloads in Python.
-
-Edit the YAML to change instructions; preserve JSON output schemas and the
-`${payload}` placeholder in person-context templates. YAML folded blocks (`>-`)
-join wrapped lines with spaces. The loader preserves literal JSON braces and
-substitutes only explicit template placeholders. Prompts are cached per process,
-so restart the app or notebook kernel after editing them. No reindexing is needed
-for query/answer changes; to apply description-prompt changes to existing media,
-rerun description extraction. Framework-managed LightRAG/RAG-Anything prompts
-remain managed by those frameworks.
+Older experiment walkthroughs remain in this directory for context; this README and WEB_DEMO.md describe the current app workflow.

@@ -98,7 +98,6 @@ def merge_person_context(entities, context):
         return merged
     supplied = [name.strip() for name in people if isinstance(name, str) and name.strip()]
     merged['people'] = list(dict.fromkeys(supplied + merged['people']))
-    print(merged)
     return merged
 
 

@@ -38,5 +38,18 @@
       "الملك عبد العزيز",
       "عبدالعزيز بن سعود"
     ]
+  },
+  "faisal_bin_abdulaziz": {
+    "name_ar": "فيصل بن عبد العزيز",
+    "name_en": "Faisal bin Abdulaziz",
+    "aliases": [
+      "King Faisal",
+      "King Faisal bin Abdul Aziz",
+      "Faisal bin Abdul Aziz",
+      "Faisal Ibn Abdulaziz",
+      "الملك فيصل",
+      "الملك فيصل بن عبدالعزيز",
+      "فيصل بن عبدالعزيز آل سعود"
+    ]
   }
 }

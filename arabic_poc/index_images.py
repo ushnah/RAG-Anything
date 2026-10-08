@@ -49,12 +49,12 @@ with tempfile.TemporaryDirectory(dir=storage) as tmp:
  for path,rows in new.items(): save_json(stage/'sources'/(rows[0]['id'].rsplit('-',1)[0]+'.json'),{'fingerprint':{'refresh':'image-additions'},'records':rows})
  video_search.INPUTS=[str(stage.resolve())]
  all_rows=video_search.collect()
- existing={r['id']:v for r,v in zip(combined['records'],combined['vectors'])}
- needed=[r for r in all_rows if r['id'] not in existing]
+ existing={r['id']:(r['normalized_text'],v) for r,v in zip(combined['records'],combined['vectors'])}
+ needed=[r for r in all_rows if r['id'] not in existing or existing[r['id']][0] != r['normalized_text']]
  if needed:
   embedded=encoder.encode([r['normalized_text'] for r in needed],batch_size=4,return_dense=True)['dense_vecs']
-  existing.update({r['id']:v.tolist() for r,v in zip(needed,embedded)})
- combined.update(records=all_rows,vectors=[existing[r['id']] for r in all_rows])
+  existing.update({r['id']:(r['normalized_text'],v.tolist()) for r,v in zip(needed,embedded)})
+ combined.update(records=all_rows,vectors=[existing[r['id']][1] for r in all_rows])
  backup=storage/('image-additions-backup-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
  backup.mkdir()
  for name in ['index.json','visual-index.json']:shutil.copy2(storage/name,backup/name)

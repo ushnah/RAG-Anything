@@ -47,7 +47,7 @@ document.querySelectorAll('[data-prompt]').forEach(button => button.onclick = ()
 api('/api/catalog').then(data => {
 	datasets = data.datasets;
 	choose('all');
-	const total = datasets.reduce((sum, dataset) => sum + dataset.count, 0);
+	const total = libraryRows('all').length;
 	if ($('workspace-count')) $('workspace-count').textContent = `${total} INDEXED ITEMS`;
 }).catch(error => status(`Could not load the library. ${error.message}`, true));
 
