@@ -4,26 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Arabic Content Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
-    <aside class="app-rail" id="app-rail">
-      <div class="rail-brand"><span class="brand-mark">◒</span><span class="rail-brand-text"><small>ARABIC RESEARCH</small></span></div>
+    <header class="app-rail" id="app-rail">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Open navigation">☰</button>
+      <div class="rail-brand"><span class="brand-mark">◒</span><span class="rail-brand-text">Arabic Research</span></div>
       <nav class="rail-nav" aria-label="Primary navigation">
         <button class="rail-link active" data-scroll="workspace"><span>⌂</span><b>Workspace</b></button>
         <button class="rail-link" data-scroll="evidence"><span>◈</span><b>Evidence</b></button>
         <button class="rail-link" data-scroll="ask-card"><span>＋</span><b>New search</b></button>
       </nav>
-      <div class="rail-bottom"><span class="rail-status-dot"></span><span>LOCAL DEMO<br><small>CONNECTED</small></span></div>
-    </aside>
+      <div class="header-actions"><span class="live-badge">Live demo</span><button class="header-icon" id="clear-search" title="Clear current search">↺</button><div class="avatar">AR</div></div>
+    </header>
     <div class="app-main">
-      <header class="site-header">
-        <button class="menu-toggle" id="menu-toggle" aria-label="Open navigation">☰</button>
-        <div class="breadcrumb"><span>Research desk</span><i>/</i><strong>Arabic content search</strong></div>
-        <div class="header-actions"><span class="live-badge">LIVE DEMO</span><button class="header-icon" id="clear-search" title="Clear current search">↺</button><div class="avatar">AR</div></div>
-      </header>
       <main>
         <section class="hero">
           <div class="hero-kicker"><span class="hero-line"></span><p class="eyebrow">MULTIMODAL KNOWLEDGE DESK</p></div>
