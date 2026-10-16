@@ -25,24 +25,53 @@
     <div class="app-main">
       <main>
         <section class="hero">
-          <div class="hero-kicker"><span class="hero-line"></span><p class="eyebrow">MULTIMODAL KNOWLEDGE DESK</p></div>
-          <h1>Ask the archive.<br><em>Follow the proof.</em></h1>
-          <p>One search surface for Arabic text, images, recordings and video. Every result stays connected to the passage, frame or moment that supports it.</p>
+          <div class="hero-grid">
+            <div class="hero-copy">
+              <div class="hero-kicker reveal"><span class="hero-line"></span><p class="eyebrow">MULTIMODAL KNOWLEDGE DESK</p></div>
+              <h1 class="reveal reveal-delay-1">Ask the archive.<br><em>Follow the proof.</em></h1>
+              <p class="reveal reveal-delay-2">One search surface for Arabic text, images, recordings and video. Every result stays connected to the passage, frame or moment that supports it.</p>
+              <div class="hero-meta reveal reveal-delay-3">
+                <span><strong>32</strong>sources indexed</span>
+                <span><strong>5</strong>media types</span>
+                <span><strong>2</strong>languages</span>
+              </div>
+            </div>
+            <div class="hero-visual reveal reveal-delay-2" aria-hidden="true">
+              <div class="mockup">
+                <div class="mockup-bar"><span></span><span></span><span></span><div class="mockup-url">arabic-research.local</div></div>
+                <div class="mockup-body">
+                  <div class="mockup-question" dir="rtl">أرني القبة الخضراء</div>
+                  <div class="mockup-answer">
+                    <div class="mockup-answer-label">ANSWER</div>
+                    <div class="mockup-answer-text" dir="rtl">القبة الخضراء هي قبة المسجد النبوي في المدينة المنورة، وتظهر في المشهد المرئي للفيديو…</div>
+                    <div class="mockup-citation">Source · wikidata_tunisian_lecture.mp4 · 0:42</div>
+                  </div>
+                  <div class="mockup-media"><span class="mockup-play">►</span><div class="mockup-track"><div class="mockup-progress"></div></div><span class="mockup-time">0:42 / 1:05</span></div>
+                </div>
+              </div>
+              <div class="float-chip float-chip-1">✓ Source-backed</div>
+              <div class="float-chip float-chip-2">🎞 Video evidence</div>
+              <div class="float-chip float-chip-3" dir="rtl">القبة الخضراء</div>
+            </div>
+          </div>
         </section>
         <section class="capabilities" aria-label="What you can explore">
-          <button class="capability capability-dark" data-prompt="من يشرف على فهرسة المخطوطات؟" data-kind="document"><span class="cap-icon">Aa</span><span><strong>Read documents</strong><small>Find a fact in Arabic text</small></span><b>↗</b></button>
-          <button class="capability" data-prompt="كيف يعرّف التسجيل الطائرة؟" data-kind="audio"><span class="cap-icon">⌁</span><span><strong>Hear evidence</strong><small>Jump to a spoken moment</small></span><b>↗</b></button>
-          <button class="capability" data-prompt="أرني القبة الخضراء" data-kind="video"><span class="cap-icon">◉</span><span><strong>See visual scenes</strong><small>Find a frame by what is visible</small></span><b>↗</b></button>
+          <p class="eyebrow capabilities-eyebrow reveal">THREE WAYS IN</p>
+          <div class="capabilities-grid">
+            <button class="capability capability-dark reveal" data-prompt="من يشرف على فهرسة المخطوطات؟" data-kind="document"><span class="cap-icon">Aa</span><span><strong>Read documents</strong><small>Find a fact in Arabic text</small></span><b>↗</b></button>
+            <button class="capability reveal reveal-delay-1" data-prompt="كيف يعرّف التسجيل الطائرة؟" data-kind="audio"><span class="cap-icon">⌁</span><span><strong>Hear evidence</strong><small>Jump to a spoken moment</small></span><b>↗</b></button>
+            <button class="capability reveal reveal-delay-2" data-prompt="أرني القبة الخضراء" data-kind="video"><span class="cap-icon">◉</span><span><strong>See visual scenes</strong><small>Find a frame by what is visible</small></span><b>↗</b></button>
+          </div>
         </section>
         <div class="workspace" id="workspace">
-          <aside class="library-sidebar">
+          <aside class="library-sidebar reveal">
             <div class="sidebar-heading"><div class="section-index">01</div><p class="eyebrow">CONTENT INDEX</p><h2>Browse the library</h2><p>Choose a collection to narrow the evidence surface.</p></div>
             <div id="collections" aria-label="Filter library by media type"></div>
             <div class="trust-card"><span class="trust-icon">✓</span><div><strong>Traceable by design</strong><p>Every answer points back to a source you can open, read, or play.</p></div></div>
           </aside>
           <section class="content-area">
             <div class="workspace-meta"><span><i class="pulse"></i> SEARCH SPACE ONLINE</span><span id="workspace-count">INDEX LOADING</span></div>
-            <div class="ask-card" id="ask-card">
+            <div class="ask-card reveal reveal-delay-1" id="ask-card">
               <div class="ask-heading"><div><p class="eyebrow">02 / ASK THE COLLECTION</p><h2>What would you like to find?</h2></div><span class="step">⌕</span></div>
               <form id="ask-form">
                 <label class="sr-only" for="question">Your question</label>
@@ -55,11 +84,11 @@
             <div class="utility-strip"><span class="utility-label">SEARCH NOTES</span><span>Text, OCR, speech and visual descriptions stay linked to their original media.</span><button id="focus-evidence">View evidence ↓</button></div>
             <div id="result" class="answer-card" hidden></div>
             <section class="evidence-section" id="evidence">
-              <div class="evidence-heading"><div><p class="eyebrow">03 / SUPPORTING MATERIAL</p><h2 id="evidence-title">Explore the library</h2></div><span id="source-count" class="count"></span></div>
+              <div class="evidence-heading reveal"><div><p class="eyebrow">03 / SUPPORTING MATERIAL</p><h2 id="evidence-title">Explore the library</h2></div><span id="source-count" class="count"></span></div>
               <p class="help" id="evidence-help">Select a content type or ask a question to see the sources behind an answer.</p><div id="sources"></div>
             </section>
           </section>
-          <aside class="insight-sidebar">
+          <aside class="insight-sidebar reveal reveal-delay-2">
             <div class="insight-top"><p class="eyebrow">DESK NOTES</p><span class="insight-mark">✦</span></div>
             <h3>Evidence is a path, not a paragraph.</h3>
             <p>Use the source cards below to inspect the exact passage, image, recording, or video moment behind a result.</p>
@@ -70,5 +99,55 @@
       <footer><div><strong>ARABIC RESEARCH</strong><span>Multimodal evidence desk</span></div><div><span>Local demonstration environment</span><span>Source-backed exploration</span></div><span class="footer-mark">↗</span></footer>
     </div>
   </div>
+  <script>
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var seen = new WeakSet();
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+    function prime(el) {
+      if (!el || seen.has(el)) return;
+      seen.add(el);
+      el.classList.add('reveal');
+      io.observe(el);
+    }
+
+    document.querySelectorAll('.reveal').forEach(function (el) { seen.add(el); io.observe(el); });
+
+    function watchContainer(id, selector) {
+      var node = document.getElementById(id);
+      if (!node) return;
+      new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+          m.addedNodes.forEach(function (n) {
+            if (n.nodeType === 1 && n.matches && n.matches(selector)) prime(n);
+          });
+        });
+      }).observe(node, { childList: true });
+    }
+    watchContainer('sources', '.source-card');
+    watchContainer('collections', '.collection');
+
+    var result = document.getElementById('result');
+    if (result) {
+      new MutationObserver(function () {
+        if (!result.hidden) {
+          result.classList.remove('is-visible');
+          result.classList.add('reveal');
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () { result.classList.add('is-visible'); });
+          });
+        }
+      }).observe(result, { attributes: true, attributeFilter: ['hidden'] });
+    }
+  })();
+  </script>
 </body>
 </html>
